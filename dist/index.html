@@ -40,15 +40,15 @@
 <button id="viewCargo" type="button" class="seg-btn" aria-pressed="false">立體貨物模型</button>
 </div>
 </div>
-<p class="footnote">點選「放置一號感知器」或「放置二號感知器」後，直接點擊模型上的「＋」位置即可移動（點到另一顆自動對調）；連上藍牙後，模型上的束帶與紅光脈衝會即時同步顯示哪裡鬆脫。</p>
+<p class="footnote">點擊或拖曳 #1／#2 設定位置。</p>
 <div class="model-layout">
 <div class="model-stage">
-<div class="model-picker-bar" role="group" aria-label="選擇要擺放的感知器">
-<button id="pickSensor1" type="button" class="picker-btn picker-s1" aria-pressed="true"><span class="picker-dot s1"></span>放置一號感知器 (#1)</button>
-<button id="pickSensor2" type="button" class="picker-btn picker-s2" aria-pressed="false"><span class="picker-dot s2"></span>放置二號感知器 (#2)</button>
+<div class="model-picker-bar" role="group" aria-label="選擇感知器">
+<button id="pickSensor1" type="button" class="picker-btn picker-s1" aria-pressed="true"><span class="picker-dot s1"></span>#1 一號</button>
+<button id="pickSensor2" type="button" class="picker-btn picker-s2" aria-pressed="false"><span class="picker-dot s2"></span>#2 二號</button>
 </div>
 <div id="cargoModelCanvas" class="cargo-model-canvas"></div>
-<p id="modelPlacementHint" class="footnote model-hint">直接點擊模型上的錨點擺放感知器。</p>
+<p id="modelPlacementHint" class="footnote model-hint">拖曳 #1／#2 或點擊「＋」調整位置</p>
 </div>
 <aside class="model-sidebar">
 <h3>感知器位置設定</h3>
@@ -88,16 +88,16 @@
 <div class="dual-gauge-grid">
 <article id="bleCard1" class="sensor-gauge-card" data-state="offline">
 <div class="sensor-card-head">
-<div><span class="sensor-chip s1">一號感知器 #1</span><span id="bleLoc1" class="loc-badge">前左側</span></div>
-<span id="bleState1" class="sensor-state-pill" data-state="offline">尚未連接</span>
+<div><span class="sensor-chip s1">#1 一號</span><span id="bleLoc1" class="loc-badge">前左</span></div>
+<span id="bleState1" class="sensor-state-pill" data-state="offline">離線</span>
 </div>
 <div class="sensor-reading-row">
 <div class="sensor-metric">
-<span>相對基準角度（門檻 ±4°）</span>
+<span>角度變化</span>
 <strong id="bleAngle1">—</strong>
-<small id="bleStatusText1">等待藍牙資料（GPIO21/22）</small>
+<small id="bleStatusText1">GPIO21/22</small>
 </div>
-<svg id="bleGauge1" class="mini-angle-gauge" viewBox="0 0 240 156" role="img" aria-label="一號感知器角度儀表" data-state="offline">
+<svg id="bleGauge1" class="mini-angle-gauge" viewBox="0 0 240 156" role="img" aria-label="一號感知器角度" data-state="offline">
 <path class="gauge-track" d="M29 122 A91 91 0 0 1 211 122"/>
 <path class="gauge-alarm" d="M29 122 A91 91 0 0 1 101.1 33.0 M138.9 33.0 A91 91 0 0 1 211 122"/>
 <path class="gauge-normal" d="M101.1 33.0 A91 91 0 0 1 138.9 33.0"/>
@@ -108,21 +108,21 @@
 <text x="120" y="150" class="gauge-live-value" id="bleGaugeVal1" text-anchor="middle">—</text>
 </svg>
 </div>
-<div class="risk-meter"><div class="risk-meter-head"><span>4° 警報門檻安全餘裕</span><span id="bleRiskText1">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="bleRiskFill1" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
+<div class="risk-meter"><div class="risk-meter-head"><span>門檻 4°</span><span id="bleRiskText1">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="bleRiskFill1" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
 </article>
 
 <article id="bleCard2" class="sensor-gauge-card" data-state="offline">
 <div class="sensor-card-head">
-<div><span class="sensor-chip s2">二號感知器 #2</span><span id="bleLoc2" class="loc-badge">後右側</span></div>
-<span id="bleState2" class="sensor-state-pill" data-state="offline">尚未連接</span>
+<div><span class="sensor-chip s2">#2 二號</span><span id="bleLoc2" class="loc-badge">後右</span></div>
+<span id="bleState2" class="sensor-state-pill" data-state="offline">離線</span>
 </div>
 <div class="sensor-reading-row">
 <div class="sensor-metric">
-<span>相對基準角度（門檻 ±4°）</span>
+<span>角度變化</span>
 <strong id="bleAngle2">—</strong>
-<small id="bleStatusText2">等待藍牙資料（GPIO25/26）</small>
+<small id="bleStatusText2">GPIO25/26</small>
 </div>
-<svg id="bleGauge2" class="mini-angle-gauge" viewBox="0 0 240 156" role="img" aria-label="二號感知器角度儀表" data-state="offline">
+<svg id="bleGauge2" class="mini-angle-gauge" viewBox="0 0 240 156" role="img" aria-label="二號感知器角度" data-state="offline">
 <path class="gauge-track" d="M29 122 A91 91 0 0 1 211 122"/>
 <path class="gauge-alarm" d="M29 122 A91 91 0 0 1 101.1 33.0 M138.9 33.0 A91 91 0 0 1 211 122"/>
 <path class="gauge-normal" d="M101.1 33.0 A91 91 0 0 1 138.9 33.0"/>
@@ -133,7 +133,7 @@
 <text x="120" y="150" class="gauge-live-value" id="bleGaugeVal2" text-anchor="middle">—</text>
 </svg>
 </div>
-<div class="risk-meter"><div class="risk-meter-head"><span>4° 警報門檻安全餘裕</span><span id="bleRiskText2">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="bleRiskFill2" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
+<div class="risk-meter"><div class="risk-meter-head"><span>門檻 4°</span><span id="bleRiskText2">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="bleRiskFill2" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
 </article>
 </div>
 

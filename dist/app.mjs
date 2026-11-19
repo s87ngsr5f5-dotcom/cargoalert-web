@@ -95,26 +95,27 @@ function renderBleSensor(idx, s, fresh){
     const mag = Math.abs(deg), pct = Math.min(100, (mag / 4) * 100);
     riskFill.setAttribute('width', pct.toFixed(1));
     riskFill.dataset.level = mag >= 4 ? 'alarm' : mag >= 2.5 ? 'warn' : 'ok';
-    riskText.textContent = mag >= 4 ? `已超標 (${mag.toFixed(1)}° / 4.0°)` : `安全餘裕 ${(4 - mag).toFixed(1)}°`;
+    riskText.textContent = `${mag.toFixed(1)}° / 4°`;
   };
 
   if(!connected && !demoMode){
-    card.dataset.state='offline'; pill.dataset.state='offline'; pill.textContent='尚未連接';
+    card.dataset.state='offline'; pill.dataset.state='offline'; pill.textContent='離線';
     angleEl.textContent='—'; svg.dataset.state='offline'; needle.setAttribute('transform','rotate(0 120 122)');
-    valEl.textContent='—'; subEl.textContent=`等待藍牙連線（${n===1?'GPIO21/22':'GPIO25/26'}）`;
+    valEl.textContent='—'; subEl.textContent=n===1?'GPIO21/22':'GPIO25/26';
     setRisk(null, false);
     return;
   }
   if(!s){
-    card.dataset.state='offline'; pill.dataset.state='offline'; pill.textContent=dualSupported?'讀取中…':'舊版單感測韌體';
+    card.dataset.state='offline'; pill.dataset.state='offline'; pill.textContent=dualSupported?'讀取中':'未接';
     angleEl.textContent='—'; svg.dataset.state='offline'; needle.setAttribute('transform','rotate(0 120 122)');
-    valEl.textContent='—'; subEl.textContent=dualSupported?'等待封包…':'請燒錄 v3.0 雙感知器韌體以讀取二號';
+    valEl.textContent='—'; subEl.textContent=n===1?'GPIO21/22':'GPIO25/26';
     setRisk(null, false);
     return;
   }
   const stMap = { N:'normal', W:'warning', T:'confirming', A:'alarm', E:'sensor_error', U:'uncalibrated' };
+  const shortLabel = { N:'正常', W:'注意', T:'確認中', A:'鬆脫', E:'異常', U:'未校正' };
   const st = !fresh ? 'stale' : s.fault ? 'sensor_error' : !s.calibrated ? 'uncalibrated' : (stMap[s.state] || 'normal');
-  const label = !fresh ? '資料過期' : s.fault ? '感測異常' : !s.calibrated ? '尚未校正' : (STATES[s.state] || s.state);
+  const label = !fresh ? '過期' : s.fault ? '異常' : !s.calibrated ? '未校正' : (shortLabel[s.state] || s.state);
   const validAngle = fresh && s.fault === 0 && s.calibrated && s.angle !== null;
   const angleText = validAngle ? `${s.angle >= 0 ? '+' : ''}${s.angle.toFixed(1)}°` : '—';
 
@@ -128,12 +129,12 @@ function renderBleSensor(idx, s, fresh){
 
   if(!validAngle){
     needle.setAttribute('transform','rotate(0 120 122)');
-    subEl.textContent = !fresh ? '資料逾時，暫停顯示' : s.fault ? `${FAULTS[s.fault]||'感測異常'}（原基準保留）` : '尚未設定基準，拉緊後按下方「重設基準值」';
+    subEl.textContent = !fresh ? '無訊號' : s.fault ? (FAULTS[s.fault]||'感測異常') : '需重設基準';
     return;
   }
   const bounded = Math.max(-30, Math.min(30, s.angle));
   needle.setAttribute('transform', `rotate(${(bounded*3).toFixed(1)} 120 122)`);
-  subEl.textContent = st==='alarm' ? '⚠️ 已達 4° 鬆脫警報！請檢查束帶' : st==='confirming' ? '達到 4° 門檻，持續確認 800 ms 中' : '狀態正常（< 4°）';
+  subEl.textContent = st==='alarm' ? '鬆脫警報' : st==='confirming' ? '確認中 (800ms)' : '正常';
 }
 
 function update(){

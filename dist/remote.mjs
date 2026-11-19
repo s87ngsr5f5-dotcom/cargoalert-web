@@ -90,7 +90,7 @@ function updateSingleGauge(idx,sensor,stale){
   const mag=Math.abs(deg),pct=Math.min(100,(mag/ALARM_THRESHOLD_DEG)*100);
   riskFill.setAttribute('width',pct.toFixed(1));
   riskFill.dataset.level=mag>=ALARM_THRESHOLD_DEG?'alarm':mag>=ALARM_THRESHOLD_DEG*0.625?'warn':'ok';
-  riskText.textContent=mag>=ALARM_THRESHOLD_DEG?`已超標 (${mag.toFixed(1)}° / ${ALARM_THRESHOLD_DEG}.0°)`:`安全餘裕 ${(ALARM_THRESHOLD_DEG-mag).toFixed(1)}°`;
+  riskText.textContent=`${mag.toFixed(1)}° / ${ALARM_THRESHOLD_DEG}°`;
  };
 
  if(!sensor){
@@ -118,15 +118,15 @@ function updateSingleGauge(idx,sensor,stale){
  if(!validAngle){
   needle?.setAttribute('transform','rotate(0 120 122)');
   if(value)value.textContent='—';
-  if(label)label.textContent=st==='stale'?'資料過期，暫停動畫':st==='sensor_error'?`感測異常（代碼 F${sensor.fault||1}）`:st==='uncalibrated'?'尚未設定基準（長按 GPIO27 1 秒）':'等待有效角度資料';
-  svg.setAttribute('aria-label',`${sensorNameOf(idx)}尚無有效角度資料`);
+  if(label)label.textContent=st==='stale'?'無訊號':st==='sensor_error'?`異常 (F${sensor.fault||1})`:st==='uncalibrated'?'未校正':'—';
+  svg.setAttribute('aria-label',`${sensorNameOf(idx)}無角度資料`);
   return;
  }
  const bounded=Math.max(-30,Math.min(30,sensor.delta));
  needle?.setAttribute('transform',`rotate(${(bounded*3).toFixed(1)} 120 122)`);
  if(value)value.textContent=angleText;
  const magnitude=Math.abs(sensor.delta);
- if(label)label.textContent=st==='alarm'?'已確認鬆脫：LINE 通知已排入':magnitude>=ALARM_THRESHOLD_DEG?'達到 4°：正在確認 800 ms 持續時間':'束帶角度正常（< 4°）';
+ if(label)label.textContent=st==='alarm'?'鬆脫警報':magnitude>=ALARM_THRESHOLD_DEG?'確認中 (800ms)':'正常';
  svg.setAttribute('aria-label',`${sensorNameOf(idx)}相對基準角度 ${angleText}`);
 }
 

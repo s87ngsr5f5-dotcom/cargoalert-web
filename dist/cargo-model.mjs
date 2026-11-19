@@ -1,22 +1,22 @@
-// CargoAlert v3.1 Interactive Truck Bed & 3D Isometric Cargo Model
-// Supports Click-to-Place, Drag-and-Drop between 8 slots, Auto-Swap, Ratchet Details & Real-Time Alarm Radar
+// CargoAlert v3.2 Detailed Commercial Truck & 3D Cargo Model
+// Crisp industrial blueprint SVG, zero-overlap labels, drag-and-drop + click placement
 
 export const MODEL_SLOTS = [
-  { id: 'front-left',   label: '前左側', short: '前左', truck: { x: 168, y: 122, strap: 'h-front', side: 'left'   }, cargo: { x: 146, y: 128, strap: 'c-front', side: 'left'   } },
-  { id: 'front-center', label: '前中央', short: '前中', truck: { x: 260, y: 94,  strap: 'v-left',  side: 'top'    }, cargo: { x: 260, y: 82,  strap: 'c-top-f', side: 'top'    } },
-  { id: 'front-right',  label: '前右側', short: '前右', truck: { x: 352, y: 122, strap: 'h-front', side: 'right'  }, cargo: { x: 374, y: 128, strap: 'c-front', side: 'right'  } },
-  { id: 'mid-left',     label: '中左側', short: '中左', truck: { x: 168, y: 186, strap: 'h-mid',   side: 'left'   }, cargo: { x: 134, y: 190, strap: 'c-mid',   side: 'left'   } },
-  { id: 'mid-right',    label: '中右側', short: '中右', truck: { x: 352, y: 186, strap: 'h-mid',   side: 'right'  }, cargo: { x: 386, y: 190, strap: 'c-mid',   side: 'right'  } },
-  { id: 'rear-left',    label: '後左側', short: '後左', truck: { x: 168, y: 252, strap: 'h-rear',  side: 'left'   }, cargo: { x: 160, y: 252, strap: 'c-rear',  side: 'left'   } },
-  { id: 'rear-center',  label: '後尾門', short: '後尾', truck: { x: 260, y: 278, strap: 'v-right', side: 'bottom' }, cargo: { x: 260, y: 280, strap: 'c-top-r', side: 'bottom' } },
-  { id: 'rear-right',   label: '後右側', short: '後右', truck: { x: 352, y: 252, strap: 'h-rear',  side: 'right'  }, cargo: { x: 360, y: 252, strap: 'c-rear',  side: 'right'  } },
+  { id: 'front-left',   label: '前左', truck: { x: 184, y: 158, strap: 'h-front', side: 'left'   }, cargo: { x: 156, y: 146, strap: 'c-front', side: 'left'   } },
+  { id: 'front-center', label: '前中', truck: { x: 280, y: 134, strap: 'v-front', side: 'top'    }, cargo: { x: 280, y: 92,  strap: 'c-top-f', side: 'top'    } },
+  { id: 'front-right',  label: '前右', truck: { x: 376, y: 158, strap: 'h-front', side: 'right'  }, cargo: { x: 404, y: 146, strap: 'c-front', side: 'right'  } },
+  { id: 'mid-left',     label: '中左', truck: { x: 184, y: 228, strap: 'h-mid',   side: 'left'   }, cargo: { x: 144, y: 214, strap: 'c-mid',   side: 'left'   } },
+  { id: 'mid-right',    label: '中右', truck: { x: 376, y: 228, strap: 'h-mid',   side: 'right'  }, cargo: { x: 416, y: 214, strap: 'c-mid',   side: 'right'  } },
+  { id: 'rear-left',    label: '後左', truck: { x: 184, y: 298, strap: 'h-rear',  side: 'left'   }, cargo: { x: 170, y: 280, strap: 'c-rear',  side: 'left'   } },
+  { id: 'rear-center',  label: '後尾', truck: { x: 280, y: 326, strap: 'v-rear',  side: 'bottom' }, cargo: { x: 280, y: 314, strap: 'c-top-r', side: 'bottom' } },
+  { id: 'rear-right',   label: '後右', truck: { x: 376, y: 298, strap: 'h-rear',  side: 'right'  }, cargo: { x: 390, y: 280, strap: 'c-rear',  side: 'right'  } },
 ];
 
 export const PRESETS = {
-  diagonal: { name: '對角固定（推薦）', s1: 'front-left',   s2: 'rear-right'  },
-  front:    { name: '前側左右雙綁',     s1: 'front-left',   s2: 'front-right' },
-  left:     { name: '左側前後雙綁',     s1: 'front-left',   s2: 'rear-left'   },
-  center:   { name: '前後軸向固定',     s1: 'front-center', s2: 'rear-center' },
+  diagonal: { name: '對角固定', s1: 'front-left',   s2: 'rear-right'  },
+  front:    { name: '前側雙綁', s1: 'front-left',   s2: 'front-right' },
+  left:     { name: '左側雙綁', s1: 'front-left',   s2: 'rear-left'   },
+  center:   { name: '前後軸向', s1: 'front-center', s2: 'rear-center' },
 };
 
 const STORAGE_PREFIX = 'cargoalert.model.layout.v1.';
@@ -36,7 +36,7 @@ export function initThemeToggle(btnId = 'themeToggle') {
     const btn = document.getElementById(btnId);
     if (btn) {
       const dark = theme !== 'light';
-      btn.textContent = dark ? '☀️ 淺色模式' : '🌙 深色儀表';
+      btn.textContent = dark ? '☀️ 淺色' : '🌙 深色';
       btn.setAttribute('aria-pressed', String(!dark));
     }
   };
@@ -63,8 +63,8 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
     view: 'truck',
     s1: 'front-left',
     s2: 'rear-right',
-    note1: '前左主束帶',
-    note2: '後右尾門束帶',
+    note1: '',
+    note2: '',
   };
   let liveSensors = [
     { sensorId: 1, valid: false, calibrated: false, state: 'offline', delta: null, fault: 0 },
@@ -80,8 +80,8 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
         if (saved.view === 'truck' || saved.view === 'cargo') config.view = saved.view;
         if (MODEL_SLOTS.some(s => s.id === saved.s1)) config.s1 = saved.s1;
         if (MODEL_SLOTS.some(s => s.id === saved.s2) && saved.s2 !== config.s1) config.s2 = saved.s2;
-        if (typeof saved.note1 === 'string') config.note1 = saved.note1.slice(0, 24);
-        if (typeof saved.note2 === 'string') config.note2 = saved.note2.slice(0, 24);
+        if (typeof saved.note1 === 'string') config.note1 = saved.note1.slice(0, 20);
+        if (typeof saved.note2 === 'string') config.note2 = saved.note2.slice(0, 20);
       }
     } catch {}
     render();
@@ -105,7 +105,7 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
   function formatLocation(sensorId) {
     const info = getPlacementInfo()[sensorId];
     if (!info) return '';
-    return info.note ? `${info.label}（${info.note}）` : info.label;
+    return info.note ? `${info.label}·${info.note}` : info.label;
   }
 
   function placeSensor(sensorId, slotId) {
@@ -147,7 +147,7 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
   }
 
   function setNote(sensorId, text) {
-    const cleaned = String(text || '').slice(0, 24);
+    const cleaned = String(text || '').slice(0, 20);
     if (sensorId === 1) config.note1 = cleaned;
     else config.note2 = cleaned;
     save();
@@ -180,12 +180,12 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
     const pointToSvg = evt => {
       const rect = svg.getBoundingClientRect();
       return {
-        x: ((evt.clientX - rect.left) / rect.width) * 520,
-        y: ((evt.clientY - rect.top) / rect.height) * 340,
+        x: ((evt.clientX - rect.left) / rect.width) * 560,
+        y: ((evt.clientY - rect.top) / rect.height) * 390,
       };
     };
     const nearestSlot = pt => {
-      let best = null, minD = 42;
+      let best = null, minD = 44;
       for (const s of MODEL_SLOTS) {
         const p = viewName === 'truck' ? s.truck : s.cargo;
         const d = Math.hypot(p.x - pt.x, p.y - pt.y);
@@ -193,7 +193,6 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
       }
       return best;
     };
-
     svg.addEventListener('pointermove', evt => {
       if (!draggingSensor) return;
       const hit = nearestSlot(pointToSvg(evt));
@@ -204,7 +203,6 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
         });
       }
     });
-
     const finishDrag = evt => {
       if (!draggingSensor) return;
       const target = nearestSlot(pointToSvg(evt));
@@ -218,87 +216,191 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
     svg.addEventListener('pointercancel', () => { draggingSensor = 0; hoverSlotId = ''; render(); });
   }
 
+  function appendDefs(svg) {
+    const defs = el('defs');
+    // Blueprint Grid
+    const pat = el('pattern', { id: 'cmGrid', width: 22, height: 22, patternUnits: 'userSpaceOnUse' });
+    pat.append(el('path', { d: 'M 22 0 L 0 0 0 22', fill: 'none', stroke: 'rgba(130,192,214,0.07)', 'stroke-width': 1 }));
+    defs.append(pat);
+
+    // Metallic Cab Gradient
+    const cabGrad = el('linearGradient', { id: 'cabGrad', x1: '0%', y1: '0%', x2: '100%', y2: '0%' });
+    cabGrad.append(
+      el('stop', { offset: '0%', 'stop-color': '#1b4760' }),
+      el('stop', { offset: '22%', 'stop-color': '#2b6685' }),
+      el('stop', { offset: '50%', 'stop-color': '#327496' }),
+      el('stop', { offset: '78%', 'stop-color': '#2b6685' }),
+      el('stop', { offset: '100%', 'stop-color': '#1b4760' })
+    );
+    defs.append(cabGrad);
+
+    // Windshield Glass Gradient
+    const glassGrad = el('linearGradient', { id: 'glassGrad', x1: '0%', y1: '0%', x2: '0%', y2: '100%' });
+    glassGrad.append(
+      el('stop', { offset: '0%', 'stop-color': '#0b1f2e' }),
+      el('stop', { offset: '45%', 'stop-color': '#163c54' }),
+      el('stop', { offset: '100%', 'stop-color': '#0d2536' })
+    );
+    defs.append(glassGrad);
+
+    // Headlight Beam Gradient
+    const beamGrad = el('linearGradient', { id: 'beamGrad', x1: '0%', y1: '100%', x2: '0%', y2: '0%' });
+    beamGrad.append(
+      el('stop', { offset: '0%', 'stop-color': 'rgba(255,232,148,0.28)' }),
+      el('stop', { offset: '100%', 'stop-color': 'rgba(255,232,148,0)' })
+    );
+    defs.append(beamGrad);
+
+    // Bed Floor Gradient
+    const bedGrad = el('linearGradient', { id: 'bedGrad', x1: '0%', y1: '0%', x2: '0%', y2: '100%' });
+    bedGrad.append(
+      el('stop', { offset: '0%', 'stop-color': '#10293a' }),
+      el('stop', { offset: '100%', 'stop-color': '#16374d' })
+    );
+    defs.append(bedGrad);
+
+    // Cargo Box Gradient
+    const boxGrad = el('linearGradient', { id: 'boxGrad', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
+    boxGrad.append(
+      el('stop', { offset: '0%', 'stop-color': '#2c586e' }),
+      el('stop', { offset: '100%', 'stop-color': '#1e4052' })
+    );
+    defs.append(boxGrad);
+
+    svg.append(defs);
+  }
+
   function appendHud(svg) {
     const s1st = sensorVisualState(liveSensors[0]);
     const s2st = sensorVisualState(liveSensors[1]);
-    const alarmCount = [s1st, s2st].filter(x => x === 'alarm').length;
-    const summary = alarmCount ? `🚨 ${alarmCount} 處束帶鬆脫警報` : liveStale ? '離線／等待連線' : (s1st === 'normal' && s2st === 'normal') ? '✅ 雙側固定正常' : '監測中（拖曳或點擊調整位置）';
-    svg.append(el('rect', { x: 14, y: 10, width: 174, height: 24, rx: 12, class: 'cm-status-hud' }));
-    svg.append(el('text', { x: 101, y: 26, class: 'cm-hud-txt', 'text-anchor': 'middle' }, summary));
+    const alarms = [s1st, s2st].filter(x => x === 'alarm').length;
+    const text = alarms ? `鬆脫警報 (${alarms})` : liveStale ? '離線' : (s1st === 'normal' && s2st === 'normal') ? '雙側正常' : '監測中';
+    const cls = alarms ? 'cm-hud-alarm' : (s1st === 'normal' && s2st === 'normal' && !liveStale) ? 'cm-hud-ok' : 'cm-status-hud';
+    svg.append(el('rect', { x: 14, y: 12, width: 102, height: 24, rx: 12, class: cls }));
+    svg.append(el('text', { x: 65, y: 28, class: 'cm-hud-txt', 'text-anchor': 'middle' }, text));
   }
 
   function buildTruckSvg() {
     const svg = el('svg', {
-      viewBox: '0 0 520 340',
+      viewBox: '0 0 560 390',
       class: 'cargo-model-svg',
       role: 'img',
-      'aria-label': '貨車貨斗感知器配置互動模型',
+      'aria-label': '貨車貨斗感知器配置圖',
     });
 
-    const defs = el('defs');
-    const pat = el('pattern', { id: 'cmGrid', width: 20, height: 20, patternUnits: 'userSpaceOnUse' });
-    pat.append(el('path', { d: 'M 20 0 L 0 0 0 20', fill: 'none', stroke: 'rgba(148,197,214,0.08)', 'stroke-width': 1 }));
-    defs.append(pat);
-    svg.append(defs);
-    svg.append(el('rect', { x: 0, y: 0, width: 520, height: 340, rx: 14, fill: 'url(#cmGrid)' }));
-
+    appendDefs(svg);
+    svg.append(el('rect', { x: 0, y: 0, width: 560, height: 390, rx: 14, fill: 'url(#cmGrid)' }));
     appendHud(svg);
-    svg.append(el('text', { x: 260, y: 21, class: 'cm-dir-label', 'text-anchor': 'middle' }, '▲ 車頭方向'));
-    svg.append(el('text', { x: 76, y: 190, class: 'cm-side-label', 'text-anchor': 'middle' }, '左側 (駕駛)'));
-    svg.append(el('text', { x: 444, y: 190, class: 'cm-side-label', 'text-anchor': 'middle' }, '右側 (副駕)'));
-    svg.append(el('text', { x: 260, y: 332, class: 'cm-dir-label', 'text-anchor': 'middle' }, '車尾尾門'));
 
-    // Wheels
-    for (const [x, y, w, h] of [[146, 44, 15, 36], [359, 44, 15, 36], [144, 224, 17, 46], [359, 224, 17, 46]]) {
+    // Subtle direction labels
+    svg.append(el('text', { x: 280, y: 20, class: 'cm-dir-label', 'text-anchor': 'middle' }, '▲ 車頭'));
+    svg.append(el('text', { x: 54, y: 232, class: 'cm-side-label', 'text-anchor': 'middle' }, '左'));
+    svg.append(el('text', { x: 506, y: 232, class: 'cm-side-label', 'text-anchor': 'middle' }, '右'));
+    svg.append(el('text', { x: 280, y: 380, class: 'cm-dir-label', 'text-anchor': 'middle' }, '車尾'));
+
+    // Ground Shadow under Truck
+    svg.append(el('rect', { x: 162, y: 38, width: 236, height: 318, rx: 22, fill: 'rgba(0,0,0,0.34)' }));
+
+    // Headlight Glow Cones
+    svg.append(el('polygon', { points: '196,42 172,10 226,10 220,42', fill: 'url(#beamGrad)' }));
+    svg.append(el('polygon', { points: '340,42 334,10 388,10 364,42', fill: 'url(#beamGrad)' }));
+
+    // Front Single Tires & Rear Twin Tires (with tread lines)
+    const drawTire = (x, y, w, h) => {
       svg.append(el('rect', { x, y, width: w, height: h, rx: 4, class: 'cm-wheel' }));
+      for (let ty = y + 6; ty < y + h - 4; ty += 7) {
+        svg.append(el('line', { x1: x + 2, y1: ty, x2: x + w - 2, y2: ty, stroke: 'rgba(130,175,195,0.22)', 'stroke-width': 1.2 }));
+      }
+    };
+    drawTire(164, 58, 15, 38);
+    drawTire(381, 58, 15, 38);
+    // Rear Dual Wheels (Commercial Truck style)
+    drawTire(158, 256, 13, 46);
+    drawTire(172, 256, 11, 46);
+    drawTire(377, 256, 11, 46);
+    drawTire(389, 256, 13, 46);
+
+    // Side Mirrors with Brackets
+    svg.append(el('path', { d: 'M180 62 L154 54 L152 68 L178 72 Z', class: 'cm-mirror' }));
+    svg.append(el('path', { d: 'M380 62 L406 54 L408 68 L382 72 Z', class: 'cm-mirror' }));
+
+    // Front Bumper
+    svg.append(el('path', { d: 'M188 38 Q280 28 372 38 L376 46 Q280 38 184 46 Z', fill: '#355f78', stroke: '#7db1c9', 'stroke-width': 1.4 }));
+
+    // Truck Cab Body (Rounded commercial cab)
+    svg.append(el('path', {
+      d: 'M186 44 Q280 36 374 44 L382 62 L382 114 Q382 120 374 120 L186 120 Q178 120 178 114 L178 62 Z',
+      fill: 'url(#cabGrad)', stroke: '#7bb3cc', 'stroke-width': 2,
+    }));
+
+    // Headlights & Turn Signals
+    svg.append(el('rect', { x: 194, y: 40, width: 26, height: 6, rx: 3, class: 'cm-headlight' }));
+    svg.append(el('rect', { x: 340, y: 40, width: 26, height: 6, rx: 3, class: 'cm-headlight' }));
+    svg.append(el('rect', { x: 244, y: 40, width: 72, height: 4, rx: 2, fill: 'rgba(15,39,56,0.65)' }));
+
+    // Curved Windshield + Reflection + Wipers
+    svg.append(el('path', {
+      d: 'M192 54 Q280 46 368 54 L373 76 Q280 70 187 76 Z',
+      fill: 'url(#glassGrad)', stroke: '#6da5bf', 'stroke-width': 1.5,
+    }));
+    svg.append(el('path', { d: 'M202 58 L224 56 L216 71 L196 72 Z', fill: 'rgba(255,255,255,0.09)' }));
+    svg.append(el('line', { x1: 215, y1: 56, x2: 248, y2: 64, stroke: '#9bc5d6', 'stroke-width': 1.4, 'stroke-linecap': 'round' }));
+    svg.append(el('line', { x1: 288, y1: 56, x2: 322, y2: 64, stroke: '#9bc5d6', 'stroke-width': 1.4, 'stroke-linecap': 'round' }));
+
+    // Cab Roof Panel & Air Deflector Line
+    svg.append(el('rect', { x: 198, y: 82, width: 164, height: 30, rx: 8, fill: 'rgba(13,37,54,0.38)', stroke: 'rgba(138,195,219,0.35)', 'stroke-width': 1.2 }));
+    svg.append(el('line', { x1: 216, y1: 97, x2: 344, y2: 97, stroke: 'rgba(138,195,219,0.22)', 'stroke-width': 1.4 }));
+
+    // Chassis Gap + Headboard Protective Rack (龍門架)
+    svg.append(el('rect', { x: 214, y: 120, width: 132, height: 8, fill: '#0b1b26' }));
+    svg.append(el('rect', { x: 174, y: 126, width: 212, height: 8, rx: 3, fill: '#3b6c85', stroke: '#8bc0d6', 'stroke-width': 1.5 }));
+
+    // Flatbed Cargo Deck (Outer Rail + Inner Bed Floor)
+    svg.append(el('rect', { x: 174, y: 132, width: 212, height: 212, rx: 8, fill: 'url(#bedGrad)', stroke: '#6fa7c2', 'stroke-width': 2.6 }));
+    // Side Rail Posts (欄板柱)
+    for (const py of [158, 228, 298]) {
+      svg.append(el('rect', { x: 171, y: py - 7, width: 6, height: 14, rx: 2, fill: '#8bc0d6' }));
+      svg.append(el('rect', { x: 383, y: py - 7, width: 6, height: 14, rx: 2, fill: '#8bc0d6' }));
     }
-    // Mirrors
-    svg.append(el('path', { d: 'M162 46 L140 39 L140 52 L162 54 Z', class: 'cm-mirror' }));
-    svg.append(el('path', { d: 'M358 46 L380 39 L380 52 L358 54 Z', class: 'cm-mirror' }));
-
-    // Cab
-    svg.append(el('path', { d: 'M172 32 Q260 23 348 32 L358 49 L358 84 L162 84 L162 49 Z', class: 'cm-cab' }));
-    svg.append(el('path', { d: 'M178 41 Q260 35 342 41 L346 58 Q260 54 174 58 Z', class: 'cm-windshield' }));
-    svg.append(el('rect', { x: 174, y: 29, width: 24, height: 5, rx: 2, class: 'cm-headlight' }));
-    svg.append(el('rect', { x: 322, y: 29, width: 24, height: 5, rx: 2, class: 'cm-headlight' }));
-    svg.append(el('text', { x: 260, y: 74, class: 'cm-cab-label', 'text-anchor': 'middle' }, '駕駛室'));
-
-    // Bed Frame & Ribs
-    svg.append(el('rect', { x: 158, y: 90, width: 204, height: 200, rx: 8, class: 'cm-bed' }));
-    for (let x = 182; x <= 338; x += 26) {
-      svg.append(el('line', { x1: x, y1: 96, x2: x, y2: 284, class: 'cm-bed-rib' }));
+    // Wooden/Steel Deck Planks
+    for (let x = 198; x <= 362; x += 27) {
+      svg.append(el('line', { x1: x, y1: 138, x2: x, y2: 338, class: 'cm-bed-rib' }));
     }
 
-    // Cargo Crates
-    svg.append(el('rect', { x: 184, y: 108, width: 152, height: 70, rx: 6, class: 'cm-cargo-box' }));
-    svg.append(el('line', { x1: 184, y1: 143, x2: 336, y2: 143, class: 'cm-cargo-tape' }));
-    svg.append(el('text', { x: 260, y: 147, class: 'cm-cargo-text', 'text-anchor': 'middle' }, '前段貨物 / 棧板 A'));
+    // Two Realistic Cargo Pallets / Boxes
+    const drawCrate = (x, y, w, h, title) => {
+      svg.append(el('rect', { x: x + 3, y: y + 4, width: w, height: h, rx: 6, fill: 'rgba(0,0,0,0.28)' }));
+      svg.append(el('rect', { x, y, width: w, height: h, rx: 6, fill: 'url(#boxGrad)', stroke: '#84b4c9', 'stroke-width': 1.6 }));
+      svg.append(el('rect', { x: x + 6, y: y + 6, width: w - 12, height: h - 12, rx: 4, fill: 'none', stroke: 'rgba(180,220,235,0.2)', 'stroke-width': 1 }));
+      svg.append(el('line', { x1: x, y1: y + h / 2, x2: x + w, y2: y + h / 2, class: 'cm-cargo-tape' }));
+      svg.append(el('text', { x: x + w / 2, y: y + h / 2 + 4, class: 'cm-cargo-text', 'text-anchor': 'middle' }, title));
+    };
+    drawCrate(202, 148, 156, 72, '前段貨物');
+    drawCrate(202, 234, 156, 76, '後段貨物');
 
-    svg.append(el('rect', { x: 184, y: 192, width: 152, height: 76, rx: 6, class: 'cm-cargo-box' }));
-    svg.append(el('line', { x1: 184, y1: 230, x2: 336, y2: 230, class: 'cm-cargo-tape' }));
-    svg.append(el('text', { x: 260, y: 234, class: 'cm-cargo-text', 'text-anchor': 'middle' }, '後段貨物 / 棧板 B'));
-
-    // Straps + Ratchet Buckles
+    // Straps + Ratchet Tensioners
     const straps = [
-      { key: 'h-front', x1: 162, y1: 122, x2: 358, y2: 122, rx: 254, ry: 118 },
-      { key: 'h-mid',   x1: 162, y1: 186, x2: 358, y2: 186, rx: 254, ry: 182 },
-      { key: 'h-rear',  x1: 162, y1: 252, x2: 358, y2: 252, rx: 254, ry: 248 },
-      { key: 'v-left',  x1: 260, y1: 94,  x2: 260, y2: 186, rx: 256, ry: 136 },
-      { key: 'v-right', x1: 260, y1: 186, x2: 260, y2: 278, rx: 256, ry: 228 },
+      { key: 'h-front', x1: 180, y1: 158, x2: 380, y2: 158, rx: 273, ry: 154 },
+      { key: 'h-mid',   x1: 180, y1: 228, x2: 380, y2: 228, rx: 273, ry: 224 },
+      { key: 'h-rear',  x1: 180, y1: 298, x2: 380, y2: 298, rx: 273, ry: 294 },
+      { key: 'v-front', x1: 280, y1: 134, x2: 280, y2: 228, rx: 276, ry: 178 },
+      { key: 'v-rear',  x1: 280, y1: 228, x2: 280, y2: 326, rx: 276, ry: 272 },
     ];
     for (const st of straps) {
       const stState = strapStateFor(st.key);
-      if (stState === 'idle' && (st.key === 'v-left' || st.key === 'v-right')) continue;
+      if (stState === 'idle' && (st.key === 'v-front' || st.key === 'v-rear')) continue;
       svg.append(el('line', { x1: st.x1, y1: st.y1, x2: st.x2, y2: st.y2, class: `cm-strap cm-strap-${stState}` }));
       if (stState !== 'idle') {
-        svg.append(el('rect', { x: st.rx, y: st.ry, width: 12, height: 8, rx: 2, class: 'cm-ratchet' }));
+        svg.append(el('rect', { x: st.rx, y: st.ry, width: 14, height: 8, rx: 2, class: 'cm-ratchet' }));
       }
     }
 
-    // Tailgate + Tail Lights
-    svg.append(el('rect', { x: 164, y: 288, width: 192, height: 7, rx: 3, class: 'cm-tailgate' }));
-    svg.append(el('rect', { x: 166, y: 292, width: 20, height: 4, rx: 1.5, class: 'cm-taillight' }));
-    svg.append(el('rect', { x: 334, y: 292, width: 20, height: 4, rx: 1.5, class: 'cm-taillight' }));
+    // Rear Bumper + Tailgate + Taillights + Reverse Lights
+    svg.append(el('rect', { x: 178, y: 342, width: 204, height: 10, rx: 4, fill: '#2c5870', stroke: '#7eb2c9', 'stroke-width': 1.5 }));
+    svg.append(el('rect', { x: 186, y: 345, width: 24, height: 5, rx: 2, class: 'cm-taillight' }));
+    svg.append(el('rect', { x: 350, y: 345, width: 24, height: 5, rx: 2, class: 'cm-taillight' }));
+    svg.append(el('rect', { x: 214, y: 345, width: 10, height: 5, rx: 1.5, fill: '#f6d27a' }));
+    svg.append(el('rect', { x: 336, y: 345, width: 10, height: 5, rx: 1.5, fill: '#f6d27a' }));
 
     appendSlotMarkers(svg, 'truck');
     attachDragHandlers(svg, 'truck');
@@ -307,38 +409,34 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
 
   function buildCargoSvg() {
     const svg = el('svg', {
-      viewBox: '0 0 520 340',
+      viewBox: '0 0 560 390',
       class: 'cargo-model-svg',
       role: 'img',
-      'aria-label': '立體貨物模型感知器配置互動圖',
+      'aria-label': '立體貨物模型感知器配置圖',
     });
 
-    const defs = el('defs');
-    const pat = el('pattern', { id: 'cmGridIso', width: 20, height: 20, patternUnits: 'userSpaceOnUse' });
-    pat.append(el('path', { d: 'M 20 0 L 0 0 0 20', fill: 'none', stroke: 'rgba(148,197,214,0.08)', 'stroke-width': 1 }));
-    defs.append(pat);
-    svg.append(defs);
-    svg.append(el('rect', { x: 0, y: 0, width: 520, height: 340, rx: 14, fill: 'url(#cmGridIso)' }));
+    appendDefs(svg);
+    svg.append(el('rect', { x: 0, y: 0, width: 560, height: 390, rx: 14, fill: 'url(#cmGrid)' }));
     appendHud(svg);
-    svg.append(el('text', { x: 356, y: 26, class: 'cm-dir-label', 'text-anchor': 'middle' }, '3D 立體貨物（可拖曳或點擊）'));
+    svg.append(el('text', { x: 280, y: 24, class: 'cm-dir-label', 'text-anchor': 'middle' }, '3D 貨物視角'));
 
-    // Wooden pallet base
-    svg.append(el('polygon', { points: '260,300 118,226 118,210 260,284 402,210 402,226', class: 'cm-pallet-side' }));
-    svg.append(el('polygon', { points: '260,284 118,210 260,138 402,210', class: 'cm-pallet-top' }));
+    // Pallet Base
+    svg.append(el('polygon', { points: '280,342 126,262 126,244 280,324 434,244 434,262', class: 'cm-pallet-side' }));
+    svg.append(el('polygon', { points: '280,324 126,244 280,166 434,244', class: 'cm-pallet-top' }));
 
     // 3D Crate
-    svg.append(el('polygon', { points: '260,270 134,204 134,116 260,182', class: 'cm-iso-left' }));
-    svg.append(el('polygon', { points: '260,270 386,204 386,116 260,182', class: 'cm-iso-right' }));
-    svg.append(el('polygon', { points: '260,182 134,116 260,54 386,116', class: 'cm-iso-top' }));
-    svg.append(el('line', { x1: 197, y1: 85, x2: 323, y2: 149, class: 'cm-cargo-tape' }));
-    svg.append(el('text', { x: 260, y: 124, class: 'cm-cargo-text', 'text-anchor': 'middle' }, '固定貨物本體'));
+    svg.append(el('polygon', { points: '280,308 144,236 144,136 280,208', class: 'cm-iso-left' }));
+    svg.append(el('polygon', { points: '280,308 416,236 416,136 280,208', class: 'cm-iso-right' }));
+    svg.append(el('polygon', { points: '280,208 144,136 280,66 416,136', class: 'cm-iso-top' }));
+    svg.append(el('line', { x1: 212, y1: 101, x2: 348, y2: 172, class: 'cm-cargo-tape' }));
+    svg.append(el('text', { x: 280, y: 144, class: 'cm-cargo-text', 'text-anchor': 'middle' }, '固定貨物'));
 
     const isoStraps = [
-      { key: 'c-front', d: 'M146 128 L260 72 L374 128' },
-      { key: 'c-mid',   d: 'M134 190 L260 124 L386 190' },
-      { key: 'c-rear',  d: 'M160 252 L260 202 L360 252' },
-      { key: 'c-top-f', d: 'M260 54 L260 182' },
-      { key: 'c-top-r', d: 'M260 182 L260 284' },
+      { key: 'c-front', d: 'M156 146 L280 82 L404 146' },
+      { key: 'c-mid',   d: 'M144 214 L280 144 L416 214' },
+      { key: 'c-rear',  d: 'M170 280 L280 226 L390 280' },
+      { key: 'c-top-f', d: 'M280 66 L280 208' },
+      { key: 'c-top-r', d: 'M280 208 L280 324' },
     ];
     for (const st of isoStraps) {
       const stState = strapStateFor(st.key);
@@ -363,9 +461,7 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
         'data-slot': slot.id,
         tabindex: '0',
         role: 'button',
-        'aria-label': occupant
-          ? `${slot.label}：${occupant === 1 ? '一號' : '二號'}感知器，可點擊切換或拖曳至其他位置`
-          : `${slot.label}：空位，點擊放置${activeSensor === 1 ? '一號' : '二號'}感知器`,
+        'aria-label': occupant ? `${slot.label} #${occupant}` : `${slot.label} 空位`,
       });
 
       g.addEventListener('pointerdown', evt => {
@@ -377,13 +473,8 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
         }
       });
       g.addEventListener('click', () => {
-        if (occupant && occupant !== activeSensor) {
-          placeSensor(activeSensor, slot.id);
-        } else if (!occupant) {
-          placeSensor(activeSensor, slot.id);
-        } else if (occupant) {
-          onSelectSensor?.(occupant);
-        }
+        if (!occupant || occupant !== activeSensor) placeSensor(activeSensor, slot.id);
+        else onSelectSensor?.(occupant);
       });
       g.addEventListener('keydown', e => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); placeSensor(activeSensor, slot.id); }
@@ -391,32 +482,36 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
 
       if (occupant) {
         if (st === 'alarm' || st === 'confirming') {
-          g.append(el('circle', { cx: pt.x, cy: pt.y, r: 22, class: `cm-pulse cm-pulse-${st}` }));
+          g.append(el('circle', { cx: pt.x, cy: pt.y, r: 23, class: `cm-pulse cm-pulse-${st}` }));
         }
         g.append(el('circle', { cx: pt.x, cy: pt.y, r: 17, class: 'cm-node-bg' }));
         g.append(el('text', { x: pt.x, y: pt.y + 5, class: 'cm-node-num', 'text-anchor': 'middle' }, `#${occupant}`));
 
-        // Safe clamped callout coordinates (never clips outside 0..520 x 0..340)
-        const bx = pt.side === 'left' ? Math.max(10, pt.x - 124)
-                 : pt.side === 'right' ? Math.min(410, pt.x + 22)
-                 : pt.x - 50;
-        const by = pt.side === 'top' ? Math.max(38, pt.y - 44)
-                 : pt.side === 'bottom' ? Math.min(296, pt.y + 20)
-                 : pt.y - 16;
+        // Crisp big-number callout beside sensor (never overlaps cab or edges)
+        const w = 108, h = 40;
+        const bx = pt.side === 'left' ? Math.max(12, pt.x - w - 24)
+                 : pt.side === 'right' ? Math.min(548 - w, pt.x + 24)
+                 : pt.x + 26;
+        const by = pt.side === 'top' ? pt.y - 20
+                 : pt.side === 'bottom' ? pt.y - 18
+                 : pt.y - 20;
 
-        const angleStr = !liveStale && sensor?.valid && sensor?.calibrated && Number.isFinite(sensor.delta)
-          ? `${sensor.delta > 0 ? '+' : ''}${sensor.delta.toFixed(1)}°`
-          : st === 'sensor_error' ? '異常' : st === 'uncalibrated' ? '未校正' : '—';
-        const stateTag = st === 'alarm' ? '⚠️鬆脫' : st === 'confirming' ? '確認中' : st === 'normal' ? '正常' : st === 'sensor_error' ? '故障' : '待命';
+        const hasAngle = !liveStale && sensor?.valid && sensor?.calibrated && Number.isFinite(sensor.delta);
+        const bigVal = hasAngle ? `${sensor.delta > 0 ? '+' : ''}${sensor.delta.toFixed(1)}°`
+                     : st === 'sensor_error' ? '異常'
+                     : st === 'uncalibrated' ? '未校正'
+                     : '—';
+        const sub = st === 'alarm' ? `${slot.label} · 鬆脫` : st === 'confirming' ? `${slot.label} · 確認` : `${slot.label}`;
 
-        g.append(el('rect', { x: bx, y: by, width: 100, height: 32, rx: 8, class: `cm-callout cm-callout-${st}` }));
-        g.append(el('text', { x: bx + 50, y: by + 13, class: 'cm-callout-title', 'text-anchor': 'middle' }, `${occupant === 1 ? '一號' : '二號'} · ${slot.short}`));
-        g.append(el('text', { x: bx + 50, y: by + 26, class: 'cm-callout-val', 'text-anchor': 'middle' }, `${angleStr} ${stateTag}`));
+        g.append(el('rect', { x: bx, y: by, width: w, height: h, rx: 9, class: `cm-callout cm-callout-${st}` }));
+        g.append(el('text', { x: bx + w / 2, y: by + 14, class: 'cm-callout-title', 'text-anchor': 'middle' }, `#${occupant} ${sub}`));
+        g.append(el('text', { x: bx + w / 2, y: by + 33, class: 'cm-callout-big', 'text-anchor': 'middle' }, bigVal));
       } else {
-        g.append(el('circle', { cx: pt.x, cy: pt.y, r: 11, class: 'cm-empty-dot' }));
+        g.append(el('circle', { cx: pt.x, cy: pt.y, r: 10.5, class: 'cm-empty-dot' }));
         g.append(el('text', { x: pt.x, y: pt.y + 4, class: 'cm-empty-plus', 'text-anchor': 'middle' }, '+'));
-        const ty = pt.side === 'top' ? pt.y - 15 : pt.y + 22;
-        g.append(el('text', { x: pt.x, y: ty, class: 'cm-empty-label', 'text-anchor': 'middle' }, slot.short));
+        const lx = pt.side === 'left' ? pt.x - 24 : pt.side === 'right' ? pt.x + 24 : pt.x + 26;
+        const ly = pt.side === 'top' || pt.side === 'bottom' ? pt.y + 4 : pt.y + 4;
+        g.append(el('text', { x: lx, y: ly, class: 'cm-empty-label', 'text-anchor': 'middle' }, slot.label));
       }
 
       svg.append(g);
@@ -426,7 +521,6 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
   function render() {
     const root = document.getElementById(containerId);
     if (!root) return;
-
     const canvas = root.querySelector('#cargoModelCanvas');
     if (canvas) canvas.replaceChildren(config.view === 'truck' ? buildTruckSvg() : buildCargoSvg());
 
@@ -445,7 +539,7 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
 
     const hint = root.querySelector('#modelPlacementHint');
     if (hint) {
-      hint.textContent = `目前選取【${activeSensor === 1 ? '一號感知器（GPIO21/22）' : '二號感知器（GPIO25/26）'}】— 點擊任一「＋」或直接拖曳 #1／#2 節點即可移動位置。`;
+      hint.textContent = `拖曳 #1／#2 或點擊「＋」調整位置`;
     }
   }
 

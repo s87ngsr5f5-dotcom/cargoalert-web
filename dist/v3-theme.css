@@ -260,8 +260,12 @@ html[data-theme="light"] .model-picker-bar .picker-btn.picker-s2[aria-pressed="t
 }
 .cm-ratchet { fill: #d7e8f0; stroke: #102a3b; stroke-width: 1.2; }
 .cm-taillight { fill: #ff5c66; opacity: 0.9; }
-.cm-status-hud { fill: rgba(7, 20, 30, 0.78); stroke: rgba(114, 174, 199, 0.35); stroke-width: 1; }
-.cm-hud-txt { font-size: 10.5px; fill: #cde7f2; font-weight: 700; }
+.cm-status-hud { fill: rgba(7, 20, 30, 0.82); stroke: rgba(114, 174, 199, 0.35); stroke-width: 1; }
+.cm-hud-ok { fill: rgba(20, 92, 84, 0.88); stroke: #43c5b4; stroke-width: 1.2; }
+.cm-hud-alarm { fill: rgba(155, 25, 35, 0.92); stroke: #ff7a83; stroke-width: 1.4; }
+.cm-hud-txt { font-size: 11px; fill: #eef8fc; font-weight: 750; }
+.cm-callout-big { font-size: 17px; fill: #ffffff; font-weight: 850; font-variant-numeric: tabular-nums; pointer-events: none; }
+.remote-login, .remote-monitor, #cargoModelSection, #monitor, #history { scroll-margin-top: 96px; }
 
 /* Model Sidebar */
 .model-sidebar {
@@ -327,7 +331,10 @@ html[data-theme="light"] .model-picker-bar .picker-btn.picker-s2[aria-pressed="t
 .sensor-state-pill[data-state="sensor_error"] { background: var(--ca-red-bg); color: var(--ca-red); border-color: color-mix(in srgb, var(--ca-red) 50%, transparent); }
 
 .sensor-metric span, .sensor-metric small { color: var(--ca-muted); }
-.sensor-metric strong { color: var(--ca-ink); font-size: 42px; letter-spacing: -0.02em; }
+.sensor-metric strong { color: var(--ca-ink); font-size: 52px; line-height: 1.05; letter-spacing: -0.03em; font-weight: 850; font-variant-numeric: tabular-nums; }
+.sensor-gauge-card[data-state="normal"] .sensor-metric strong { color: var(--ca-teal); }
+.sensor-gauge-card[data-state="confirming"] .sensor-metric strong,
+.sensor-gauge-card[data-state="warning"] .sensor-metric strong { color: var(--ca-amber); }
 .sensor-gauge-card[data-state="alarm"] .sensor-metric strong { color: var(--ca-red); }
 
 /* 0° → 4° Safety Margin Progress Bar */
