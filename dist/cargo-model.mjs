@@ -1,15 +1,35 @@
-// CargoAlert v3.2 Detailed Commercial Truck & 3D Cargo Model
-// Crisp industrial blueprint SVG, zero-overlap labels, drag-and-drop + click placement
+// CargoAlert v3.4 Studio Commercial Flatbed Truck Model (Top-Down + Mathematically Exact 3D Isometric Truck)
+// Crisp automotive details, zero-overlap badges, drag-and-drop & click placement
+
+const ISO_OX = 126, ISO_OY = 314;
+function iso(u, v, z) {
+  return [
+    +(ISO_OX + u * 0.82 + v * 0.78).toFixed(1),
+    +(ISO_OY - u * 0.39 + v * 0.41 - z * 0.90).toFixed(1),
+  ];
+}
+function isoPts(arr) {
+  return arr.map(([u, v, z]) => iso(u, v, z).join(',')).join(' ');
+}
+
+const C_FL = iso(152, 0, 48);
+const C_FC = iso(106, 36, 132);
+const C_FR = iso(152, 130, 48);
+const C_ML = iso(226, 0, 48);
+const C_MR = iso(226, 130, 48);
+const C_RL = iso(300, 0, 48);
+const C_RC = iso(338, 65, 48);
+const C_RR = iso(300, 130, 48);
 
 export const MODEL_SLOTS = [
-  { id: 'front-left',   label: '前左', truck: { x: 184, y: 158, strap: 'h-front', side: 'left'   }, cargo: { x: 156, y: 146, strap: 'c-front', side: 'left'   } },
-  { id: 'front-center', label: '前中', truck: { x: 280, y: 134, strap: 'v-front', side: 'top'    }, cargo: { x: 280, y: 92,  strap: 'c-top-f', side: 'top'    } },
-  { id: 'front-right',  label: '前右', truck: { x: 376, y: 158, strap: 'h-front', side: 'right'  }, cargo: { x: 404, y: 146, strap: 'c-front', side: 'right'  } },
-  { id: 'mid-left',     label: '中左', truck: { x: 184, y: 228, strap: 'h-mid',   side: 'left'   }, cargo: { x: 144, y: 214, strap: 'c-mid',   side: 'left'   } },
-  { id: 'mid-right',    label: '中右', truck: { x: 376, y: 228, strap: 'h-mid',   side: 'right'  }, cargo: { x: 416, y: 214, strap: 'c-mid',   side: 'right'  } },
-  { id: 'rear-left',    label: '後左', truck: { x: 184, y: 298, strap: 'h-rear',  side: 'left'   }, cargo: { x: 170, y: 280, strap: 'c-rear',  side: 'left'   } },
-  { id: 'rear-center',  label: '後尾', truck: { x: 280, y: 326, strap: 'v-rear',  side: 'bottom' }, cargo: { x: 280, y: 314, strap: 'c-top-r', side: 'bottom' } },
-  { id: 'rear-right',   label: '後右', truck: { x: 376, y: 298, strap: 'h-rear',  side: 'right'  }, cargo: { x: 390, y: 280, strap: 'c-rear',  side: 'right'  } },
+  { id: 'front-left',   label: '前左', truck: { x: 194, y: 178, strap: 'h-front', side: 'left'   }, cargo: { x: C_FL[0], y: C_FL[1], strap: 'c-front', side: 'left'   } },
+  { id: 'front-center', label: '前中', truck: { x: 300, y: 152, strap: 'v-front', side: 'top'    }, cargo: { x: C_FC[0], y: C_FC[1], strap: 'c-top-f', side: 'top'    } },
+  { id: 'front-right',  label: '前右', truck: { x: 406, y: 178, strap: 'h-front', side: 'right'  }, cargo: { x: C_FR[0], y: C_FR[1], strap: 'c-front', side: 'right'  } },
+  { id: 'mid-left',     label: '中左', truck: { x: 194, y: 248, strap: 'h-mid',   side: 'left'   }, cargo: { x: C_ML[0], y: C_ML[1], strap: 'c-mid',   side: 'left'   } },
+  { id: 'mid-right',    label: '中右', truck: { x: 406, y: 248, strap: 'h-mid',   side: 'right'  }, cargo: { x: C_MR[0], y: C_MR[1], strap: 'c-mid',   side: 'right'  } },
+  { id: 'rear-left',    label: '後左', truck: { x: 194, y: 318, strap: 'h-rear',  side: 'left'   }, cargo: { x: C_RL[0], y: C_RL[1], strap: 'c-rear',  side: 'left'   } },
+  { id: 'rear-center',  label: '後尾', truck: { x: 300, y: 348, strap: 'v-rear',  side: 'bottom' }, cargo: { x: C_RC[0], y: C_RC[1], strap: 'c-top-r', side: 'top'    } },
+  { id: 'rear-right',   label: '後右', truck: { x: 406, y: 318, strap: 'h-rear',  side: 'right'  }, cargo: { x: C_RR[0], y: C_RR[1], strap: 'c-rear',  side: 'right'  } },
 ];
 
 export const PRESETS = {
@@ -22,6 +42,7 @@ export const PRESETS = {
 const STORAGE_PREFIX = 'cargoalert.model.layout.v1.';
 const THEME_KEY = 'cargoalert.theme.v1';
 const SVG_NS = 'http://www.w3.org/2000/svg';
+const VB_W = 600, VB_H = 420;
 
 function el(tag, attrs = {}, text = null) {
   const node = document.createElementNS(SVG_NS, tag);
@@ -127,7 +148,6 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
     config.view = view;
     save();
     render();
-    onChange?.(getPlacementInfo());
   }
 
   function setActiveSensor(id) {
@@ -136,8 +156,8 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
     onSelectSensor?.(activeSensor);
   }
 
-  function applyPreset(key) {
-    const p = PRESETS[key];
+  function applyPreset(presetKey) {
+    const p = PRESETS[presetKey];
     if (!p) return;
     config.s1 = p.s1;
     config.s2 = p.s2;
@@ -146,304 +166,548 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
     onChange?.(getPlacementInfo());
   }
 
-  function setNote(sensorId, text) {
-    const cleaned = String(text || '').slice(0, 20);
-    if (sensorId === 1) config.note1 = cleaned;
-    else config.note2 = cleaned;
+  function setNote(sensorId, value) {
+    const clean = String(value || '').slice(0, 20);
+    if (sensorId === 1) config.note1 = clean;
+    else config.note2 = clean;
     save();
     onChange?.(getPlacementInfo());
   }
 
   function sensorVisualState(s) {
-    if (liveStale || !s || s.state === 'offline') return 'offline';
-    if (!s.valid || s.state === 'sensor_error') return 'sensor_error';
-    if (!s.calibrated || s.state === 'uncalibrated') return 'uncalibrated';
+    if (!s || liveStale) return 'offline';
+    if (!s.valid || s.fault) return 'sensor_error';
+    if (!s.calibrated) return 'uncalibrated';
     return s.state || 'normal';
   }
 
-  function strapStateFor(strapName) {
+  function strapStateFor(strapKey) {
     const states = [];
-    for (const [sid, slotId] of [[1, config.s1], [2, config.s2]]) {
-      const sl = slotById(slotId);
-      const pos = config.view === 'truck' ? sl.truck : sl.cargo;
-      if (pos.strap === strapName) states.push(sensorVisualState(liveSensors[sid - 1]));
+    for (const [idx, slotId] of [[0, config.s1], [1, config.s2]]) {
+      const slot = slotById(slotId);
+      const key = config.view === 'truck' ? slot.truck.strap : slot.cargo.strap;
+      if (key === strapKey) states.push(sensorVisualState(liveSensors[idx]));
     }
     if (!states.length) return 'idle';
     if (states.includes('alarm')) return 'alarm';
-    if (states.includes('sensor_error')) return 'sensor_error';
     if (states.includes('confirming') || states.includes('warning')) return 'confirming';
+    if (states.includes('sensor_error')) return 'sensor_error';
     if (states.includes('normal')) return 'normal';
-    return 'uncalibrated';
+    return 'standby';
+  }
+
+  function clientToSvg(svg, clientX, clientY) {
+    const rect = svg.getBoundingClientRect();
+    if (!rect.width || !rect.height) return { x: 0, y: 0 };
+    return {
+      x: ((clientX - rect.left) / rect.width) * VB_W,
+      y: ((clientY - rect.top) / rect.height) * VB_H,
+    };
+  }
+
+  function nearestSlot(x, y, viewName) {
+    let best = null, bestD = 9999;
+    for (const s of MODEL_SLOTS) {
+      const pt = viewName === 'truck' ? s.truck : s.cargo;
+      const d = Math.hypot(pt.x - x, pt.y - y);
+      if (d < bestD) { bestD = d; best = s; }
+    }
+    return bestD <= 68 ? best : null;
   }
 
   function attachDragHandlers(svg, viewName) {
-    const pointToSvg = evt => {
-      const rect = svg.getBoundingClientRect();
-      return {
-        x: ((evt.clientX - rect.left) / rect.width) * 560,
-        y: ((evt.clientY - rect.top) / rect.height) * 390,
-      };
-    };
-    const nearestSlot = pt => {
-      let best = null, minD = 44;
-      for (const s of MODEL_SLOTS) {
-        const p = viewName === 'truck' ? s.truck : s.cargo;
-        const d = Math.hypot(p.x - pt.x, p.y - pt.y);
-        if (d < minD) { minD = d; best = s.id; }
-      }
-      return best;
+    const finishDrag = () => {
+      if (!draggingSensor) return;
+      const sId = draggingSensor;
+      const target = hoverSlotId;
+      draggingSensor = 0;
+      hoverSlotId = '';
+      if (target) placeSensor(sId, target);
+      else render();
     };
     svg.addEventListener('pointermove', evt => {
       if (!draggingSensor) return;
-      const hit = nearestSlot(pointToSvg(evt));
-      if (hit !== hoverSlotId) {
-        hoverSlotId = hit || '';
-        svg.querySelectorAll('.cm-slot').forEach(node => {
-          node.classList.toggle('cm-drop-target', node.dataset.slot === hoverSlotId);
+      const p = clientToSvg(svg, evt.clientX, evt.clientY);
+      const near = nearestSlot(p.x, p.y, viewName);
+      const nextId = near ? near.id : '';
+      if (nextId !== hoverSlotId) {
+        hoverSlotId = nextId;
+        svg.querySelectorAll('.cm-slot').forEach(g => {
+          g.classList.toggle('cm-drop-target', g.dataset.slot === hoverSlotId);
         });
       }
     });
-    const finishDrag = evt => {
-      if (!draggingSensor) return;
-      const target = nearestSlot(pointToSvg(evt));
-      const sid = draggingSensor;
-      draggingSensor = 0;
-      hoverSlotId = '';
-      if (target) placeSensor(sid, target);
-      else render();
-    };
     svg.addEventListener('pointerup', finishDrag);
-    svg.addEventListener('pointercancel', () => { draggingSensor = 0; hoverSlotId = ''; render(); });
+    svg.addEventListener('pointercancel', finishDrag);
   }
 
   function appendDefs(svg) {
     const defs = el('defs');
-    // Blueprint Grid
-    const pat = el('pattern', { id: 'cmGrid', width: 22, height: 22, patternUnits: 'userSpaceOnUse' });
-    pat.append(el('path', { d: 'M 22 0 L 0 0 0 22', fill: 'none', stroke: 'rgba(130,192,214,0.07)', 'stroke-width': 1 }));
+
+    // Subtle blueprint engineering grid
+    const pat = el('pattern', { id: 'cmGrid', width: 24, height: 24, patternUnits: 'userSpaceOnUse' });
+    pat.append(el('path', { d: 'M 24 0 L 0 0 0 24', fill: 'none', stroke: 'rgba(130,192,224,0.06)', 'stroke-width': 1 }));
     defs.append(pat);
 
-    // Metallic Cab Gradient
-    const cabGrad = el('linearGradient', { id: 'cabGrad', x1: '0%', y1: '0%', x2: '100%', y2: '0%' });
-    cabGrad.append(
-      el('stop', { offset: '0%', 'stop-color': '#1b4760' }),
-      el('stop', { offset: '22%', 'stop-color': '#2b6685' }),
-      el('stop', { offset: '50%', 'stop-color': '#327496' }),
-      el('stop', { offset: '78%', 'stop-color': '#2b6685' }),
-      el('stop', { offset: '100%', 'stop-color': '#1b4760' })
+    // Metallic pearl-white commercial truck paint
+    const cabPaint = el('linearGradient', { id: 'cabPaint', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
+    cabPaint.append(
+      el('stop', { offset: '0%', 'stop-color': '#f5fbff' }),
+      el('stop', { offset: '48%', 'stop-color': '#d7e8f3' }),
+      el('stop', { offset: '100%', 'stop-color': '#9ebbd0' }),
     );
-    defs.append(cabGrad);
+    defs.append(cabPaint);
 
-    // Windshield Glass Gradient
-    const glassGrad = el('linearGradient', { id: 'glassGrad', x1: '0%', y1: '0%', x2: '0%', y2: '100%' });
+    // Cab side / front darker metallic planes (for 3D)
+    const cabFront = el('linearGradient', { id: 'cabFront', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
+    cabFront.append(
+      el('stop', { offset: '0%', 'stop-color': '#e1eff8' }),
+      el('stop', { offset: '100%', 'stop-color': '#b0cadb' }),
+    );
+    defs.append(cabFront);
+
+    const cabSide = el('linearGradient', { id: 'cabSide', x1: '0%', y1: '0%', x2: '0%', y2: '100%' });
+    cabSide.append(
+      el('stop', { offset: '0%', 'stop-color': '#c7deec' }),
+      el('stop', { offset: '100%', 'stop-color': '#8aa8bd' }),
+    );
+    defs.append(cabSide);
+
+    // Tinted automotive windshield glass with sky glare
+    const glassGrad = el('linearGradient', { id: 'glassGrad', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
     glassGrad.append(
-      el('stop', { offset: '0%', 'stop-color': '#0b1f2e' }),
-      el('stop', { offset: '45%', 'stop-color': '#163c54' }),
-      el('stop', { offset: '100%', 'stop-color': '#0d2536' })
+      el('stop', { offset: '0%', 'stop-color': '#0b2232' }),
+      el('stop', { offset: '45%', 'stop-color': '#235978' }),
+      el('stop', { offset: '55%', 'stop-color': '#6bb7db' }),
+      el('stop', { offset: '100%', 'stop-color': '#0e283a' }),
     );
     defs.append(glassGrad);
 
-    // Headlight Beam Gradient
+    // Headlight beam glow
     const beamGrad = el('linearGradient', { id: 'beamGrad', x1: '0%', y1: '100%', x2: '0%', y2: '0%' });
     beamGrad.append(
-      el('stop', { offset: '0%', 'stop-color': 'rgba(255,232,148,0.28)' }),
-      el('stop', { offset: '100%', 'stop-color': 'rgba(255,232,148,0)' })
+      el('stop', { offset: '0%', 'stop-color': '#fff6c7', 'stop-opacity': '0.45' }),
+      el('stop', { offset: '100%', 'stop-color': '#fff6c7', 'stop-opacity': '0' }),
     );
     defs.append(beamGrad);
 
-    // Bed Floor Gradient
-    const bedGrad = el('linearGradient', { id: 'bedGrad', x1: '0%', y1: '0%', x2: '0%', y2: '100%' });
-    bedGrad.append(
-      el('stop', { offset: '0%', 'stop-color': '#10293a' }),
-      el('stop', { offset: '100%', 'stop-color': '#16374d' })
+    // Dark steel / wooden flatbed deck
+    const bedDeck = el('linearGradient', { id: 'bedDeck', x1: '0%', y1: '0%', x2: '100%', y2: '0%' });
+    bedDeck.append(
+      el('stop', { offset: '0%', 'stop-color': '#183244' }),
+      el('stop', { offset: '50%', 'stop-color': '#214258' }),
+      el('stop', { offset: '100%', 'stop-color': '#162d3d' }),
     );
-    defs.append(bedGrad);
+    defs.append(bedDeck);
 
-    // Cargo Box Gradient
-    const boxGrad = el('linearGradient', { id: 'boxGrad', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
-    boxGrad.append(
-      el('stop', { offset: '0%', 'stop-color': '#2c586e' }),
-      el('stop', { offset: '100%', 'stop-color': '#1e4052' })
+    // Warm kraft cardboard cargo crate gradients
+    const crateTop = el('linearGradient', { id: 'crateTop', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
+    crateTop.append(
+      el('stop', { offset: '0%', 'stop-color': '#e7c593' }),
+      el('stop', { offset: '100%', 'stop-color': '#c79b61' }),
     );
-    defs.append(boxGrad);
+    const crateSideL = el('linearGradient', { id: 'crateSideL', x1: '0%', y1: '0%', x2: '0%', y2: '100%' });
+    crateSideL.append(
+      el('stop', { offset: '0%', 'stop-color': '#b8894f' }),
+      el('stop', { offset: '100%', 'stop-color': '#8f6433' }),
+    );
+    const crateSideR = el('linearGradient', { id: 'crateSideR', x1: '0%', y1: '0%', x2: '0%', y2: '100%' });
+    crateSideR.append(
+      el('stop', { offset: '0%', 'stop-color': '#9c6e3a' }),
+      el('stop', { offset: '100%', 'stop-color': '#734d23' }),
+    );
+    defs.append(crateTop, crateSideL, crateSideR);
+
+    // Tire rubber
+    const tireGrad = el('linearGradient', { id: 'tireGrad', x1: '0%', y1: '0%', x2: '100%', y2: '0%' });
+    tireGrad.append(
+      el('stop', { offset: '0%', 'stop-color': '#0b1015' }),
+      el('stop', { offset: '50%', 'stop-color': '#27343f' }),
+      el('stop', { offset: '100%', 'stop-color': '#0b1015' }),
+    );
+    defs.append(tireGrad);
 
     svg.append(defs);
   }
 
   function appendHud(svg) {
-    const s1st = sensorVisualState(liveSensors[0]);
-    const s2st = sensorVisualState(liveSensors[1]);
-    const alarms = [s1st, s2st].filter(x => x === 'alarm').length;
-    const text = alarms ? `鬆脫警報 (${alarms})` : liveStale ? '離線' : (s1st === 'normal' && s2st === 'normal') ? '雙側正常' : '監測中';
-    const cls = alarms ? 'cm-hud-alarm' : (s1st === 'normal' && s2st === 'normal' && !liveStale) ? 'cm-hud-ok' : 'cm-status-hud';
-    svg.append(el('rect', { x: 14, y: 12, width: 102, height: 24, rx: 12, class: cls }));
-    svg.append(el('text', { x: 65, y: 28, class: 'cm-hud-txt', 'text-anchor': 'middle' }, text));
+    const s1St = sensorVisualState(liveSensors[0]);
+    const s2St = sensorVisualState(liveSensors[1]);
+    const anyAlarm = s1St === 'alarm' || s2St === 'alarm';
+    const anyOnline = !liveStale && (liveSensors[0]?.valid || liveSensors[1]?.valid);
+    const hudCls = anyAlarm ? 'cm-hud-alarm' : anyOnline ? 'cm-hud-ok' : 'cm-status-hud';
+    const hudTxt = anyAlarm ? '鬆脫警報' : anyOnline ? '監測中' : '待命';
+    svg.append(el('rect', { x: 14, y: 12, width: 92, height: 24, rx: 12, class: hudCls }));
+    svg.append(el('text', { x: 60, y: 28, class: 'cm-hud-txt', 'text-anchor': 'middle' }, hudTxt));
   }
 
+  // ===== VIEW 1: REALISTIC 3.5T COMMERCIAL FLATBED TRUCK (TOP-DOWN) =====
   function buildTruckSvg() {
     const svg = el('svg', {
-      viewBox: '0 0 560 390',
+      viewBox: `0 0 ${VB_W} ${VB_H}`,
       class: 'cargo-model-svg',
       role: 'img',
-      'aria-label': '貨車貨斗感知器配置圖',
+      'aria-label': '貨車俯視圖感知器配置模型',
     });
 
     appendDefs(svg);
-    svg.append(el('rect', { x: 0, y: 0, width: 560, height: 390, rx: 14, fill: 'url(#cmGrid)' }));
+    svg.append(el('rect', { x: 0, y: 0, width: VB_W, height: VB_H, rx: 14, fill: 'url(#cmGrid)' }));
     appendHud(svg);
 
-    // Subtle direction labels
-    svg.append(el('text', { x: 280, y: 20, class: 'cm-dir-label', 'text-anchor': 'middle' }, '▲ 車頭'));
-    svg.append(el('text', { x: 54, y: 232, class: 'cm-side-label', 'text-anchor': 'middle' }, '左'));
-    svg.append(el('text', { x: 506, y: 232, class: 'cm-side-label', 'text-anchor': 'middle' }, '右'));
-    svg.append(el('text', { x: 280, y: 380, class: 'cm-dir-label', 'text-anchor': 'middle' }, '車尾'));
+    svg.append(el('text', { x: 300, y: 24, class: 'cm-dir-label', 'text-anchor': 'middle' }, '▲ 車頭方向'));
+    svg.append(el('text', { x: 300, y: 406, class: 'cm-dir-label', 'text-anchor': 'middle' }, '車尾'));
 
-    // Ground Shadow under Truck
-    svg.append(el('rect', { x: 162, y: 38, width: 236, height: 318, rx: 22, fill: 'rgba(0,0,0,0.34)' }));
+    const truck = el('g');
 
-    // Headlight Glow Cones
-    svg.append(el('polygon', { points: '196,42 172,10 226,10 220,42', fill: 'url(#beamGrad)' }));
-    svg.append(el('polygon', { points: '340,42 334,10 388,10 364,42', fill: 'url(#beamGrad)' }));
+    // Soft studio ground drop shadow under vehicle
+    truck.append(el('rect', { x: 194, y: 50, width: 226, height: 344, rx: 28, fill: 'rgba(0,0,0,0.44)' }));
 
-    // Front Single Tires & Rear Twin Tires (with tread lines)
+    // Subtle headlight cones
+    truck.append(el('polygon', { points: '216,45 198,10 250,10 242,45', fill: 'url(#beamGrad)' }));
+    truck.append(el('polygon', { points: '358,45 350,10 402,10 384,45', fill: 'url(#beamGrad)' }));
+
+    // === TIRES (Front single steer + Rear dual drive wheels) ===
     const drawTire = (x, y, w, h) => {
-      svg.append(el('rect', { x, y, width: w, height: h, rx: 4, class: 'cm-wheel' }));
-      for (let ty = y + 6; ty < y + h - 4; ty += 7) {
-        svg.append(el('line', { x1: x + 2, y1: ty, x2: x + w - 2, y2: ty, stroke: 'rgba(130,175,195,0.22)', 'stroke-width': 1.2 }));
+      truck.append(el('rect', { x, y, width: w, height: h, rx: 5, fill: 'url(#tireGrad)', stroke: '#3c5363', 'stroke-width': 1.2 }));
+      for (let ty = y + 7; ty < y + h - 5; ty += 7) {
+        truck.append(el('line', { x1: x + 2, y1: ty, x2: x + w - 2, y2: ty, stroke: 'rgba(255,255,255,0.16)', 'stroke-width': 1.4 }));
       }
     };
-    drawTire(164, 58, 15, 38);
-    drawTire(381, 58, 15, 38);
-    // Rear Dual Wheels (Commercial Truck style)
-    drawTire(158, 256, 13, 46);
-    drawTire(172, 256, 11, 46);
-    drawTire(377, 256, 11, 46);
-    drawTire(389, 256, 13, 46);
+    drawTire(182, 74, 15, 44);
+    drawTire(403, 74, 15, 44);
+    drawTire(174, 272, 11, 54);
+    drawTire(186, 272, 11, 54);
+    drawTire(403, 272, 11, 54);
+    drawTire(415, 272, 11, 54);
 
-    // Side Mirrors with Brackets
-    svg.append(el('path', { d: 'M180 62 L154 54 L152 68 L178 72 Z', class: 'cm-mirror' }));
-    svg.append(el('path', { d: 'M380 62 L406 54 L408 68 L382 72 Z', class: 'cm-mirror' }));
+    // Side Underrun Safety Guards & Fuel Tank
+    truck.append(el('rect', { x: 185, y: 170, width: 7, height: 88, rx: 2, fill: '#476578', stroke: '#7ca2b8', 'stroke-width': 0.9 }));
+    truck.append(el('rect', { x: 408, y: 170, width: 7, height: 88, rx: 2, fill: '#476578', stroke: '#7ca2b8', 'stroke-width': 0.9 }));
+    truck.append(el('rect', { x: 404, y: 190, width: 12, height: 42, rx: 3, fill: '#7f9eb0', stroke: '#233b4a', 'stroke-width': 1 }));
 
-    // Front Bumper
-    svg.append(el('path', { d: 'M188 38 Q280 28 372 38 L376 46 Q280 38 184 46 Z', fill: '#355f78', stroke: '#7db1c9', 'stroke-width': 1.4 }));
+    // === COMMERCIAL CAB (Sculpted Pearl-White 3.5T Cab) ===
+    // Extended Commercial Side Mirrors
+    truck.append(el('path', { d: 'M198 66 L174 56 L171 64 L182 70', fill: 'none', stroke: '#55758a', 'stroke-width': 2.5, 'stroke-linecap': 'round' }));
+    truck.append(el('rect', { x: 165, y: 50, width: 10, height: 22, rx: 3, fill: '#263f50', stroke: '#9bc0d4', 'stroke-width': 1.2 }));
+    truck.append(el('path', { d: 'M402 66 L426 56 L429 64 L418 70', fill: 'none', stroke: '#55758a', 'stroke-width': 2.5, 'stroke-linecap': 'round' }));
+    truck.append(el('rect', { x: 425, y: 50, width: 10, height: 22, rx: 3, fill: '#263f50', stroke: '#9bc0d4', 'stroke-width': 1.2 }));
 
-    // Truck Cab Body (Rounded commercial cab)
-    svg.append(el('path', {
-      d: 'M186 44 Q280 36 374 44 L382 62 L382 114 Q382 120 374 120 L186 120 Q178 120 178 114 L178 62 Z',
-      fill: 'url(#cabGrad)', stroke: '#7bb3cc', 'stroke-width': 2,
+    // Sculpted Front Bumper
+    truck.append(el('path', {
+      d: 'M208 42 Q300 32 392 42 L398 54 Q300 47 202 54 Z',
+      fill: '#203645', stroke: '#7ca3b8', 'stroke-width': 1.4,
+    }));
+    // Front Grille Slats + Silver Emblem
+    truck.append(el('rect', { x: 256, y: 40, width: 88, height: 7, rx: 3, fill: '#10202b', stroke: '#4c7085', 'stroke-width': 1 }));
+    truck.append(el('line', { x1: 264, y1: 43.5, x2: 336, y2: 43.5, stroke: '#8cb4c9', 'stroke-width': 1.2 }));
+    truck.append(el('circle', { cx: 300, cy: 43.5, r: 3, fill: '#e8f4fa' }));
+
+    // Crystal Headlights + Amber Corner Indicators
+    truck.append(el('rect', { x: 214, y: 42, width: 28, height: 8, rx: 3, fill: '#fff5c2', stroke: '#e8c456', 'stroke-width': 1 }));
+    truck.append(el('rect', { x: 204, y: 45, width: 9, height: 6, rx: 2, fill: '#ff9e2c' }));
+    truck.append(el('rect', { x: 358, y: 42, width: 28, height: 8, rx: 3, fill: '#fff5c2', stroke: '#e8c456', 'stroke-width': 1 }));
+    truck.append(el('rect', { x: 387, y: 45, width: 9, height: 6, rx: 2, fill: '#ff9e2c' }));
+
+    // Main Metallic Cab Body (tapered aerodynamic front corners)
+    truck.append(el('path', {
+      d: 'M202 56 Q204 45 224 44 L376 44 Q396 45 398 56 L402 124 Q402 132 392 132 L208 132 Q198 132 198 124 Z',
+      fill: 'url(#cabPaint)', stroke: '#6c91a8', 'stroke-width': 1.8,
     }));
 
-    // Headlights & Turn Signals
-    svg.append(el('rect', { x: 194, y: 40, width: 26, height: 6, rx: 3, class: 'cm-headlight' }));
-    svg.append(el('rect', { x: 340, y: 40, width: 26, height: 6, rx: 3, class: 'cm-headlight' }));
-    svg.append(el('rect', { x: 244, y: 40, width: 72, height: 4, rx: 2, fill: 'rgba(15,39,56,0.65)' }));
+    // Sculpted Roof Panel & Aerodynamic Ribs
+    truck.append(el('rect', { x: 222, y: 80, width: 156, height: 44, rx: 10, fill: 'rgba(255,255,255,0.42)', stroke: '#9ab9cc', 'stroke-width': 1.2 }));
+    for (const rx of [250, 275, 300, 325, 350]) {
+      truck.append(el('line', { x1: rx, y1: 86, x2: rx, y2: 118, stroke: 'rgba(72,106,128,0.28)', 'stroke-width': 1.8, 'stroke-linecap': 'round' }));
+    }
 
-    // Curved Windshield + Reflection + Wipers
-    svg.append(el('path', {
-      d: 'M192 54 Q280 46 368 54 L373 76 Q280 70 187 76 Z',
-      fill: 'url(#glassGrad)', stroke: '#6da5bf', 'stroke-width': 1.5,
+    // Panoramic Curved Windshield
+    truck.append(el('path', {
+      d: 'M216 58 Q300 48 384 58 L376 82 Q300 75 224 82 Z',
+      fill: 'url(#glassGrad)', stroke: '#132a3a', 'stroke-width': 2.2,
     }));
-    svg.append(el('path', { d: 'M202 58 L224 56 L216 71 L196 72 Z', fill: 'rgba(255,255,255,0.09)' }));
-    svg.append(el('line', { x1: 215, y1: 56, x2: 248, y2: 64, stroke: '#9bc5d6', 'stroke-width': 1.4, 'stroke-linecap': 'round' }));
-    svg.append(el('line', { x1: 288, y1: 56, x2: 322, y2: 64, stroke: '#9bc5d6', 'stroke-width': 1.4, 'stroke-linecap': 'round' }));
+    // Windshield Specular Reflection & Wipers
+    truck.append(el('path', { d: 'M234 61 Q264 57 284 60 L276 74 Q256 72 230 74 Z', fill: 'rgba(255,255,255,0.18)' }));
+    truck.append(el('line', { x1: 244, y1: 60, x2: 280, y2: 65, stroke: '#0c1821', 'stroke-width': 2, 'stroke-linecap': 'round' }));
+    truck.append(el('line', { x1: 312, y1: 60, x2: 348, y2: 65, stroke: '#0c1821', 'stroke-width': 2, 'stroke-linecap': 'round' }));
 
-    // Cab Roof Panel & Air Deflector Line
-    svg.append(el('rect', { x: 198, y: 82, width: 164, height: 30, rx: 8, fill: 'rgba(13,37,54,0.38)', stroke: 'rgba(138,195,219,0.35)', 'stroke-width': 1.2 }));
-    svg.append(el('line', { x1: 216, y1: 97, x2: 344, y2: 97, stroke: 'rgba(138,195,219,0.22)', 'stroke-width': 1.4 }));
+    // Subtle Side Door Glass & Cab Rear Window
+    truck.append(el('path', { d: 'M203 78 L214 84 L214 114 L203 118 Z', fill: '#18374a', opacity: 0.72 }));
+    truck.append(el('path', { d: 'M397 78 L386 84 L386 114 L397 118 Z', fill: '#18374a', opacity: 0.72 }));
+    truck.append(el('rect', { x: 246, y: 127, width: 108, height: 4, rx: 2, fill: '#173447' }));
 
-    // Chassis Gap + Headboard Protective Rack (龍門架)
-    svg.append(el('rect', { x: 214, y: 120, width: 132, height: 8, fill: '#0b1b26' }));
-    svg.append(el('rect', { x: 174, y: 126, width: 212, height: 8, rx: 3, fill: '#3b6c85', stroke: '#8bc0d6', 'stroke-width': 1.5 }));
-
-    // Flatbed Cargo Deck (Outer Rail + Inner Bed Floor)
-    svg.append(el('rect', { x: 174, y: 132, width: 212, height: 212, rx: 8, fill: 'url(#bedGrad)', stroke: '#6fa7c2', 'stroke-width': 2.6 }));
-    // Side Rail Posts (欄板柱)
-    for (const py of [158, 228, 298]) {
-      svg.append(el('rect', { x: 171, y: py - 7, width: 6, height: 14, rx: 2, fill: '#8bc0d6' }));
-      svg.append(el('rect', { x: 383, y: py - 7, width: 6, height: 14, rx: 2, fill: '#8bc0d6' }));
-    }
-    // Wooden/Steel Deck Planks
-    for (let x = 198; x <= 362; x += 27) {
-      svg.append(el('line', { x1: x, y1: 138, x2: x, y2: 338, class: 'cm-bed-rib' }));
+    // === STEEL HEADBOARD RACK (龍門架) ===
+    truck.append(el('rect', { x: 188, y: 136, width: 224, height: 9, rx: 3, fill: '#35586e', stroke: '#9cc1d6', 'stroke-width': 1.6 }));
+    for (const bx of [214, 256, 300, 344, 386]) {
+      truck.append(el('rect', { x: bx - 3, y: 135, width: 6, height: 11, rx: 1.5, fill: '#b8d6e6' }));
     }
 
-    // Two Realistic Cargo Pallets / Boxes
-    const drawCrate = (x, y, w, h, title) => {
-      svg.append(el('rect', { x: x + 3, y: y + 4, width: w, height: h, rx: 6, fill: 'rgba(0,0,0,0.28)' }));
-      svg.append(el('rect', { x, y, width: w, height: h, rx: 6, fill: 'url(#boxGrad)', stroke: '#84b4c9', 'stroke-width': 1.6 }));
-      svg.append(el('rect', { x: x + 6, y: y + 6, width: w - 12, height: h - 12, rx: 4, fill: 'none', stroke: 'rgba(180,220,235,0.2)', 'stroke-width': 1 }));
-      svg.append(el('line', { x1: x, y1: y + h / 2, x2: x + w, y2: y + h / 2, class: 'cm-cargo-tape' }));
-      svg.append(el('text', { x: x + w / 2, y: y + h / 2 + 4, class: 'cm-cargo-text', 'text-anchor': 'middle' }, title));
+    // === FLATBED CHASSIS & DECK ===
+    truck.append(el('rect', { x: 188, y: 145, width: 224, height: 224, rx: 8, fill: 'url(#bedDeck)', stroke: '#7fa8be', 'stroke-width': 2.2 }));
+    // Side Steel Rails & Tie-down Hooks
+    truck.append(el('rect', { x: 188, y: 145, width: 10, height: 224, rx: 3, fill: '#2f5368', stroke: '#8cb5cb', 'stroke-width': 1.2 }));
+    truck.append(el('rect', { x: 402, y: 145, width: 10, height: 224, rx: 3, fill: '#2f5368', stroke: '#8cb5cb', 'stroke-width': 1.2 }));
+    // Deck Planks
+    for (let px = 212; px <= 388; px += 16) {
+      truck.append(el('line', { x1: px, y1: 149, x2: px, y2: 365, stroke: 'rgba(148,196,222,0.13)', 'stroke-width': 1 }));
+    }
+
+    // === CARGO CRATES ON WOODEN PALLETS ===
+    const drawCrate = (x, y, w, h, label) => {
+      // Wooden pallet slat base
+      truck.append(el('rect', { x: x - 5, y: y - 4, width: w + 10, height: h + 8, rx: 4, fill: '#543c24', stroke: '#7a5a3a', 'stroke-width': 1.1 }));
+      // Kraft box body
+      truck.append(el('rect', { x, y, width: w, height: h, rx: 5, fill: 'url(#crateTop)', stroke: '#f0d4a8', 'stroke-width': 1.4 }));
+      // Packing tape seam
+      truck.append(el('rect', { x, y: y + h / 2 - 5, width: w, height: 10, fill: 'rgba(255,244,214,0.34)' }));
+      truck.append(el('line', { x1: x, y1: y + h / 2, x2: x + w, y2: y + h / 2, stroke: 'rgba(92,62,30,0.45)', 'stroke-width': 1 }));
+      // Shipping label
+      truck.append(el('rect', { x: x + 12, y: y + 9, width: 32, height: 15, rx: 2, fill: 'rgba(255,255,255,0.78)' }));
+      truck.append(el('line', { x1: x + 16, y1: y + 14, x2: x + 40, y2: y + 14, stroke: '#3a4a55', 'stroke-width': 1.5 }));
+      truck.append(el('line', { x1: x + 16, y1: y + 19, x2: x + 32, y2: y + 19, stroke: '#5f707c', 'stroke-width': 1.2 }));
+      truck.append(el('text', { x: x + w / 2, y: y + h / 2 + 4, class: 'cm-crate-lbl', 'text-anchor': 'middle' }, label));
     };
-    drawCrate(202, 148, 156, 72, '前段貨物');
-    drawCrate(202, 234, 156, 76, '後段貨物');
+    drawCrate(218, 170, 164, 72, '前段貨物');
+    drawCrate(218, 256, 164, 76, '後段貨物');
 
-    // Straps + Ratchet Tensioners
+    // === INDUSTRIAL RATCHET STRAPS ===
     const straps = [
-      { key: 'h-front', x1: 180, y1: 158, x2: 380, y2: 158, rx: 273, ry: 154 },
-      { key: 'h-mid',   x1: 180, y1: 228, x2: 380, y2: 228, rx: 273, ry: 224 },
-      { key: 'h-rear',  x1: 180, y1: 298, x2: 380, y2: 298, rx: 273, ry: 294 },
-      { key: 'v-front', x1: 280, y1: 134, x2: 280, y2: 228, rx: 276, ry: 178 },
-      { key: 'v-rear',  x1: 280, y1: 228, x2: 280, y2: 326, rx: 276, ry: 272 },
+      { key: 'h-front', x1: 190, y1: 178, x2: 410, y2: 178, rx: 292, ry: 173 },
+      { key: 'h-mid',   x1: 190, y1: 248, x2: 410, y2: 248, rx: 292, ry: 243 },
+      { key: 'h-rear',  x1: 190, y1: 318, x2: 410, y2: 318, rx: 292, ry: 313 },
+      { key: 'v-front', x1: 300, y1: 152, x2: 300, y2: 248, rx: 296, ry: 196 },
+      { key: 'v-rear',  x1: 300, y1: 248, x2: 300, y2: 348, rx: 296, ry: 294 },
     ];
     for (const st of straps) {
       const stState = strapStateFor(st.key);
       if (stState === 'idle' && (st.key === 'v-front' || st.key === 'v-rear')) continue;
-      svg.append(el('line', { x1: st.x1, y1: st.y1, x2: st.x2, y2: st.y2, class: `cm-strap cm-strap-${stState}` }));
+      truck.append(el('line', { x1: st.x1, y1: st.y1, x2: st.x2, y2: st.y2, class: `cm-strap cm-strap-${stState}` }));
       if (stState !== 'idle') {
-        svg.append(el('rect', { x: st.rx, y: st.ry, width: 14, height: 8, rx: 2, class: 'cm-ratchet' }));
+        truck.append(el('rect', { x: st.rx, y: st.ry, width: 16, height: 10, rx: 2.5, class: 'cm-ratchet' }));
+        truck.append(el('line', { x1: st.rx + 4, y1: st.ry + 5, x2: st.rx + 12, y2: st.ry + 5, stroke: '#102535', 'stroke-width': 1.5 }));
       }
     }
 
-    // Rear Bumper + Tailgate + Taillights + Reverse Lights
-    svg.append(el('rect', { x: 178, y: 342, width: 204, height: 10, rx: 4, fill: '#2c5870', stroke: '#7eb2c9', 'stroke-width': 1.5 }));
-    svg.append(el('rect', { x: 186, y: 345, width: 24, height: 5, rx: 2, class: 'cm-taillight' }));
-    svg.append(el('rect', { x: 350, y: 345, width: 24, height: 5, rx: 2, class: 'cm-taillight' }));
-    svg.append(el('rect', { x: 214, y: 345, width: 10, height: 5, rx: 1.5, fill: '#f6d27a' }));
-    svg.append(el('rect', { x: 336, y: 345, width: 10, height: 5, rx: 1.5, fill: '#f6d27a' }));
+    // === REAR BUMPER + TAIL LIGHT CLUSTERS ===
+    truck.append(el('rect', { x: 188, y: 366, width: 224, height: 15, rx: 4, fill: '#223745', stroke: '#8cb3c7', 'stroke-width': 1.4 }));
+    truck.append(el('rect', { x: 194, y: 369, width: 22, height: 7, rx: 2, class: 'cm-taillight' }));
+    truck.append(el('rect', { x: 218, y: 369, width: 10, height: 7, rx: 1.5, fill: '#ffad33' }));
+    truck.append(el('rect', { x: 230, y: 369, width: 8, height: 7, rx: 1.5, fill: '#e8f4fa' }));
+    truck.append(el('rect', { x: 384, y: 369, width: 22, height: 7, rx: 2, class: 'cm-taillight' }));
+    truck.append(el('rect', { x: 372, y: 369, width: 10, height: 7, rx: 1.5, fill: '#ffad33' }));
+    truck.append(el('rect', { x: 362, y: 369, width: 8, height: 7, rx: 1.5, fill: '#e8f4fa' }));
+    truck.append(el('rect', { x: 280, y: 370, width: 40, height: 6, rx: 1.5, fill: '#e8eff4' }));
 
+    svg.append(truck);
     appendSlotMarkers(svg, 'truck');
     attachDragHandlers(svg, 'truck');
     return svg;
   }
 
+  // ===== VIEW 2: MATHEMATICALLY EXACT 3D ISOMETRIC COMMERCIAL FLATBED TRUCK =====
   function buildCargoSvg() {
     const svg = el('svg', {
-      viewBox: '0 0 560 390',
+      viewBox: `0 0 ${VB_W} ${VB_H}`,
       class: 'cargo-model-svg',
       role: 'img',
-      'aria-label': '立體貨物模型感知器配置圖',
+      'aria-label': '3D 立體貨車感知器配置模型',
     });
 
     appendDefs(svg);
-    svg.append(el('rect', { x: 0, y: 0, width: 560, height: 390, rx: 14, fill: 'url(#cmGrid)' }));
+    svg.append(el('rect', { x: 0, y: 0, width: VB_W, height: VB_H, rx: 14, fill: 'url(#cmGrid)' }));
     appendHud(svg);
-    svg.append(el('text', { x: 280, y: 24, class: 'cm-dir-label', 'text-anchor': 'middle' }, '3D 貨物視角'));
+    svg.append(el('text', { x: 300, y: 24, class: 'cm-dir-label', 'text-anchor': 'middle' }, '3D 立體貨車視角'));
 
-    // Pallet Base
-    svg.append(el('polygon', { points: '280,342 126,262 126,244 280,324 434,244 434,262', class: 'cm-pallet-side' }));
-    svg.append(el('polygon', { points: '280,324 126,244 280,166 434,244', class: 'cm-pallet-top' }));
+    const g = el('g');
 
-    // 3D Crate
-    svg.append(el('polygon', { points: '280,308 144,236 144,136 280,208', class: 'cm-iso-left' }));
-    svg.append(el('polygon', { points: '280,308 416,236 416,136 280,208', class: 'cm-iso-right' }));
-    svg.append(el('polygon', { points: '280,208 144,136 280,66 416,136', class: 'cm-iso-top' }));
-    svg.append(el('line', { x1: 212, y1: 101, x2: 348, y2: 172, class: 'cm-cargo-tape' }));
-    svg.append(el('text', { x: 280, y: 144, class: 'cm-cargo-text', 'text-anchor': 'middle' }, '固定貨物'));
+    // 1. Ground shadow underneath entire truck (z = 0)
+    g.append(el('polygon', {
+      points: isoPts([[-8, -8, 0], [344, -8, 0], [344, 138, 0], [-8, 138, 0]]),
+      fill: 'rgba(0,0,0,0.42)',
+    }));
 
+    // Helper: 3D Isometric Wheel at (u, v, z)
+    const drawWheel3D = (u, v, z, rx = 18, ry = 23) => {
+      const [cx, cy] = iso(u, v, z);
+      // Inner tire depth
+      g.append(el('ellipse', { cx: cx - 8, cy: cy - 4, rx, ry, fill: '#0b1218', stroke: '#2c4150', 'stroke-width': 1.4 }));
+      // Outer tire sidewall
+      g.append(el('ellipse', { cx, cy, rx, ry, fill: '#18242e', stroke: '#4d6a7d', 'stroke-width': 1.6 }));
+      // Metallic alloy wheel rim
+      g.append(el('ellipse', { cx, cy, rx: rx * 0.56, ry: ry * 0.56, fill: '#b8d1e0', stroke: '#2c4557', 'stroke-width': 1.5 }));
+      // Center hub & lug ring
+      g.append(el('ellipse', { cx, cy, rx: rx * 0.22, ry: ry * 0.22, fill: '#2a4152' }));
+    };
+
+    // Helper: Axis-aligned 3D Box in iso(u, v, z) (draws Top, Front u0, Right v1)
+    const drawIsoBox = (u0, u1, v0, v1, z0, z1, fills, stroke = '#5f849c', sw = 1.4) => {
+      // Front face (u = u0, visible bottom-left)
+      g.append(el('polygon', {
+        points: isoPts([[u0, v0, z0], [u0, v1, z0], [u0, v1, z1], [u0, v0, z1]]),
+        fill: fills.front, stroke, 'stroke-width': sw, 'stroke-linejoin': 'round',
+      }));
+      // Right side face (v = v1, visible bottom-right)
+      g.append(el('polygon', {
+        points: isoPts([[u0, v1, z0], [u1, v1, z0], [u1, v1, z1], [u0, v1, z1]]),
+        fill: fills.side, stroke, 'stroke-width': sw, 'stroke-linejoin': 'round',
+      }));
+      // Top face (z = z1, visible top)
+      g.append(el('polygon', {
+        points: isoPts([[u0, v0, z1], [u1, v0, z1], [u1, v1, z1], [u0, v1, z1]]),
+        fill: fills.top, stroke, 'stroke-width': sw, 'stroke-linejoin': 'round',
+      }));
+    };
+
+    // 2. Chassis Frame + Fuel Tank + Side Underrun Guard (under flatbed)
+    drawIsoBox(102, 330, 14, 118, 22, 42, { front: '#152734', side: '#1e3647', top: '#244154' }, '#46687d', 1.2);
+    // Silver Fuel Tank on right side between axles
+    drawIsoBox(132, 190, 108, 126, 20, 40, { front: '#678496', side: '#8ca9ba', top: '#a8c4d4' }, '#2d4757', 1.2);
+
+    // 3. Flatbed Deck & Steel Side Rails (u = 104..338, v = 0..130)
+    // Main Bed Deck Surface
+    drawIsoBox(104, 338, 0, 130, 42, 54, { front: '#1a3648', side: '#294d64', top: 'url(#bedDeck)' }, '#84aec4', 1.7);
+    // Subtle deck planks on top surface
+    for (let pv = 18; pv < 120; pv += 20) {
+      const p1 = iso(108, pv, 54), p2 = iso(334, pv, 54);
+      g.append(el('line', { x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], stroke: 'rgba(150,200,226,0.16)', 'stroke-width': 1 }));
+    }
+    // Tailgate Red/Amber Rear Light Cluster on right-rear corner
+    g.append(el('polygon', {
+      points: isoPts([[322, 130, 44], [336, 130, 44], [336, 130, 51], [322, 130, 51]]),
+      class: 'cm-taillight',
+    }));
+
+    // 4. Steel Headboard Protective Rack (龍門架, u = 104)
+    g.append(el('polyline', {
+      points: isoPts([[104, 2, 54], [104, 2, 126], [104, 128, 126], [104, 128, 54]]),
+      fill: 'none', stroke: '#a8cee0', 'stroke-width': 4, 'stroke-linejoin': 'round',
+    }));
+    g.append(el('polyline', {
+      points: isoPts([[104, 2, 92], [104, 128, 92]]),
+      fill: 'none', stroke: '#7fa7bd', 'stroke-width': 2.4,
+    }));
+    g.append(el('polyline', {
+      points: isoPts([[104, 65, 54], [104, 65, 126]]),
+      fill: 'none', stroke: '#7fa7bd', 'stroke-width': 2.4,
+    }));
+
+    // 5. Rear Cargo Crate & Front Cargo Crate (drawn Back-to-Front!)
+    const drawCrate3D = (u0, u1, label) => {
+      // Wooden pallet base
+      drawIsoBox(u0 - 3, u1 + 3, 10, 120, 54, 60, { front: '#4a331d', side: '#5c4126', top: '#705030' }, '#85623d', 1.1);
+      // Kraft Cardboard Crate
+      drawIsoBox(u0, u1, 14, 116, 60, 110, { front: 'url(#crateSideL)', side: 'url(#crateSideR)', top: 'url(#crateTop)' }, '#ebd0a2', 1.3);
+      // Packing tape strip along top center
+      g.append(el('polygon', {
+        points: isoPts([[u0, 58, 110.2], [u1, 58, 110.2], [u1, 72, 110.2], [u0, 72, 110.2]]),
+        fill: 'rgba(255,244,218,0.34)',
+      }));
+      const [lx, ly] = iso((u0 + u1) / 2, 65, 110.5);
+      g.append(el('text', { x: lx, y: ly + 4, class: 'cm-crate-lbl', 'text-anchor': 'middle' }, label));
+    };
+    drawCrate3D(228, 320, '後段貨物');
+    drawCrate3D(120, 212, '前段貨物');
+
+    // 6. 3D Commercial Cab (u = 0..96, v = 6..124, z = 24..116 with sloped aerodynamic windshield!)
+    // Lower Cab Body (z = 24..72)
+    drawIsoBox(4, 96, 6, 124, 24, 72, { front: 'url(#cabFront)', side: 'url(#cabSide)', top: '#dcecf6' }, '#698fa6', 1.5);
+    // Upper Sloped Cab Cabin (front leans back from u=4 at z=72 to u=22 at z=116)
+    // Sloped Front Windshield Plane
+    g.append(el('polygon', {
+      points: isoPts([[4, 6, 72], [4, 124, 72], [22, 124, 116], [22, 6, 116]]),
+      fill: 'url(#cabFront)', stroke: '#698fa6', 'stroke-width': 1.5, 'stroke-linejoin': 'round',
+    }));
+    // Right Side Upper Door & A-Pillar
+    g.append(el('polygon', {
+      points: isoPts([[4, 124, 72], [96, 124, 72], [96, 124, 116], [22, 124, 116]]),
+      fill: 'url(#cabSide)', stroke: '#698fa6', 'stroke-width': 1.5, 'stroke-linejoin': 'round',
+    }));
+    // Cab Roof (Top)
+    g.append(el('polygon', {
+      points: isoPts([[22, 6, 116], [96, 6, 116], [96, 124, 116], [22, 124, 116]]),
+      fill: 'url(#cabPaint)', stroke: '#84a9bf', 'stroke-width': 1.5, 'stroke-linejoin': 'round',
+    }));
+    // Roof Wind Deflector Trim
+    g.append(el('polygon', {
+      points: isoPts([[32, 18, 117], [86, 18, 117], [86, 112, 117], [32, 112, 117]]),
+      fill: 'rgba(255,255,255,0.36)', stroke: '#9ab9cc', 'stroke-width': 1,
+    }));
+
+    // Tinted Panoramic Front Windshield Glass (inset on sloped plane)
+    g.append(el('polygon', {
+      points: isoPts([[6, 14, 76], [6, 116, 76], [21, 116, 111], [21, 14, 111]]),
+      fill: 'url(#glassGrad)', stroke: '#122938', 'stroke-width': 1.8, 'stroke-linejoin': 'round',
+    }));
+    // Side Door Window Glass
+    g.append(el('polygon', {
+      points: isoPts([[14, 124.2, 75], [84, 124.2, 75], [84, 124.2, 108], [26, 124.2, 108]]),
+      fill: 'url(#glassGrad)', stroke: '#122938', 'stroke-width': 1.5, 'stroke-linejoin': 'round',
+    }));
+    // Door Seam & Handle
+    g.append(el('polyline', {
+      points: isoPts([[86, 124.4, 34], [86, 124.4, 110]]),
+      fill: 'none', stroke: '#52758a', 'stroke-width': 1.2,
+    }));
+    g.append(el('polygon', {
+      points: isoPts([[66, 124.6, 60], [78, 124.6, 60], [78, 124.6, 64], [66, 124.6, 64]]),
+      fill: '#233b4a',
+    }));
+
+    // Front Grille + Emblem + Headlights + Turn Signals on Front Face (u = 4)
+    g.append(el('polygon', {
+      points: isoPts([[3.6, 30, 44], [3.6, 100, 44], [3.6, 100, 62], [3.6, 30, 62]]),
+      fill: '#182d3b', stroke: '#5e8399', 'stroke-width': 1.3,
+    }));
+    for (const gz of [49, 55]) {
+      const p1 = iso(3.4, 34, gz), p2 = iso(3.4, 96, gz);
+      g.append(el('line', { x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], stroke: '#89b0c4', 'stroke-width': 1.2 }));
+    }
+    // Left & Right Crystal Headlights
+    g.append(el('polygon', {
+      points: isoPts([[3.5, 10, 45], [3.5, 26, 45], [3.5, 26, 58], [3.5, 10, 58]]),
+      fill: '#fff4bd', stroke: '#d9b54c', 'stroke-width': 1.1,
+    }));
+    g.append(el('polygon', {
+      points: isoPts([[3.5, 104, 45], [3.5, 120, 45], [3.5, 120, 58], [3.5, 104, 58]]),
+      fill: '#fff4bd', stroke: '#d9b54c', 'stroke-width': 1.1,
+    }));
+    // Amber corner turn indicator
+    g.append(el('polygon', {
+      points: isoPts([[4, 124.3, 46], [14, 124.3, 46], [14, 124.3, 56], [4, 124.3, 56]]),
+      fill: '#ff9e2c',
+    }));
+    // Rugged Dark Front Bumper (protruding slightly to u = -2)
+    drawIsoBox(-2, 10, 4, 126, 22, 36, { front: '#1c3140', side: '#253f52', top: '#33546b' }, '#6c91a6', 1.3);
+
+    // Side Mirror (Right near side)
+    g.append(el('polygon', {
+      points: isoPts([[18, 131, 82], [24, 131, 82], [24, 131, 102], [18, 131, 102]]),
+      fill: '#1e3647', stroke: '#93b9ce', 'stroke-width': 1.2,
+    }));
+
+    // 7. Near-Side Wheels (Front Steer + Rear Dual Drive Wheels)
+    drawWheel3D(52, 125, 22, 16, 22);
+    drawWheel3D(258, 125, 23, 18, 24);
+
+    // 8. 3D RATCHET STRAPS WRAPPING CLEANLY OVER THE CARGO CRATES
     const isoStraps = [
-      { key: 'c-front', d: 'M156 146 L280 82 L404 146' },
-      { key: 'c-mid',   d: 'M144 214 L280 144 L416 214' },
-      { key: 'c-rear',  d: 'M170 280 L280 226 L390 280' },
-      { key: 'c-top-f', d: 'M280 66 L280 208' },
-      { key: 'c-top-r', d: 'M280 208 L280 324' },
+      { key: 'c-front', pts: [[152, 0, 48], [152, 14, 111], [152, 116, 111], [152, 130, 48]] },
+      { key: 'c-mid',   pts: [[226, 0, 48], [226, 14, 111], [226, 116, 111], [226, 130, 48]] },
+      { key: 'c-rear',  pts: [[300, 0, 48], [300, 14, 111], [300, 116, 111], [300, 130, 48]] },
+      { key: 'c-top-f', pts: [[106, 36, 132], [120, 65, 111], [212, 65, 111]] },
+      { key: 'c-top-r', pts: [[228, 65, 111], [320, 65, 111], [338, 65, 48]] },
     ];
     for (const st of isoStraps) {
       const stState = strapStateFor(st.key);
       if (stState === 'idle' && (st.key === 'c-top-f' || st.key === 'c-top-r')) continue;
-      svg.append(el('path', { d: st.d, fill: 'none', class: `cm-strap cm-strap-${stState}` }));
+      g.append(el('polyline', {
+        points: isoPts(st.pts),
+        fill: 'none',
+        'stroke-linejoin': 'round',
+        class: `cm-strap cm-strap-${stState}`,
+      }));
     }
 
+    svg.append(g);
     appendSlotMarkers(svg, 'cargo');
     attachDragHandlers(svg, 'cargo');
     return svg;
@@ -482,35 +746,34 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
 
       if (occupant) {
         if (st === 'alarm' || st === 'confirming') {
-          g.append(el('circle', { cx: pt.x, cy: pt.y, r: 23, class: `cm-pulse cm-pulse-${st}` }));
+          g.append(el('circle', { cx: pt.x, cy: pt.y, r: 24, class: `cm-pulse cm-pulse-${st}` }));
         }
         g.append(el('circle', { cx: pt.x, cy: pt.y, r: 17, class: 'cm-node-bg' }));
         g.append(el('text', { x: pt.x, y: pt.y + 5, class: 'cm-node-num', 'text-anchor': 'middle' }, `#${occupant}`));
 
-        // Crisp big-number callout beside sensor (never overlaps cab or edges)
-        const w = 108, h = 40;
-        const bx = pt.side === 'left' ? Math.max(12, pt.x - w - 24)
-                 : pt.side === 'right' ? Math.min(548 - w, pt.x + 24)
-                 : pt.x + 26;
-        const by = pt.side === 'top' ? pt.y - 20
-                 : pt.side === 'bottom' ? pt.y - 18
-                 : pt.y - 20;
+        const w = 112, h = 42;
+        let bx = pt.side === 'left' ? Math.max(12, pt.x - w - 26)
+               : pt.side === 'right' ? Math.min(VB_W - w - 12, pt.x + 26)
+               : Math.min(VB_W - w - 12, Math.max(12, pt.x - w / 2));
+        let by = pt.side === 'top' ? Math.max(40, pt.y - h - 22)
+               : pt.side === 'bottom' ? Math.min(VB_H - h - 14, pt.y + 22)
+               : pt.y - 21;
 
         const hasAngle = !liveStale && sensor?.valid && sensor?.calibrated && Number.isFinite(sensor.delta);
         const bigVal = hasAngle ? `${sensor.delta > 0 ? '+' : ''}${sensor.delta.toFixed(1)}°`
                      : st === 'sensor_error' ? '異常'
                      : st === 'uncalibrated' ? '未校正'
                      : '—';
-        const sub = st === 'alarm' ? `${slot.label} · 鬆脫` : st === 'confirming' ? `${slot.label} · 確認` : `${slot.label}`;
+        const sub = st === 'alarm' ? `${slot.label} · 鬆脫` : st === 'confirming' ? `${slot.label} · 確認` : slot.label;
 
-        g.append(el('rect', { x: bx, y: by, width: w, height: h, rx: 9, class: `cm-callout cm-callout-${st}` }));
-        g.append(el('text', { x: bx + w / 2, y: by + 14, class: 'cm-callout-title', 'text-anchor': 'middle' }, `#${occupant} ${sub}`));
-        g.append(el('text', { x: bx + w / 2, y: by + 33, class: 'cm-callout-big', 'text-anchor': 'middle' }, bigVal));
+        g.append(el('rect', { x: bx, y: by, width: w, height: h, rx: 10, class: `cm-callout cm-callout-${st}` }));
+        g.append(el('text', { x: bx + w / 2, y: by + 15, class: 'cm-callout-title', 'text-anchor': 'middle' }, `#${occupant} ${sub}`));
+        g.append(el('text', { x: bx + w / 2, y: by + 35, class: 'cm-callout-big', 'text-anchor': 'middle' }, bigVal));
       } else {
         g.append(el('circle', { cx: pt.x, cy: pt.y, r: 10.5, class: 'cm-empty-dot' }));
         g.append(el('text', { x: pt.x, y: pt.y + 4, class: 'cm-empty-plus', 'text-anchor': 'middle' }, '+'));
-        const lx = pt.side === 'left' ? pt.x - 24 : pt.side === 'right' ? pt.x + 24 : pt.x + 26;
-        const ly = pt.side === 'top' || pt.side === 'bottom' ? pt.y + 4 : pt.y + 4;
+        const lx = pt.side === 'left' ? pt.x - 24 : pt.side === 'right' ? pt.x + 24 : pt.x;
+        const ly = pt.side === 'top' ? pt.y - 16 : pt.side === 'bottom' ? pt.y + 22 : pt.y + 4;
         g.append(el('text', { x: lx, y: ly, class: 'cm-empty-label', 'text-anchor': 'middle' }, slot.label));
       }
 
@@ -538,9 +801,7 @@ export function createCargoModel({ containerId, onChange, onSelectSensor } = {})
     if (note2 && document.activeElement !== note2) note2.value = config.note2;
 
     const hint = root.querySelector('#modelPlacementHint');
-    if (hint) {
-      hint.textContent = `拖曳 #1／#2 或點擊「＋」調整位置`;
-    }
+    if (hint) hint.textContent = '拖曳 #1／#2 或點擊「＋」調整位置';
   }
 
   function bindControls() {

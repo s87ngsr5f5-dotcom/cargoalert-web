@@ -265,6 +265,8 @@ html[data-theme="light"] .model-picker-bar .picker-btn.picker-s2[aria-pressed="t
 .cm-hud-alarm { fill: rgba(155, 25, 35, 0.92); stroke: #ff7a83; stroke-width: 1.4; }
 .cm-hud-txt { font-size: 11px; fill: #eef8fc; font-weight: 750; }
 .cm-callout-big { font-size: 17px; fill: #ffffff; font-weight: 850; font-variant-numeric: tabular-nums; pointer-events: none; }
+.cm-crate-lbl { font-size: 11px; fill: #3b240d; font-weight: 850; pointer-events: none; letter-spacing: 0.04em; }
+.cm-strap-idle { stroke: rgba(24, 48, 66, 0.36); stroke-width: 3; stroke-dasharray: 5 4; }
 .remote-login, .remote-monitor, #cargoModelSection, #monitor, #history { scroll-margin-top: 96px; }
 
 /* Model Sidebar */
@@ -353,70 +355,92 @@ html[data-theme="light"] .model-picker-bar .picker-btn.picker-s2[aria-pressed="t
 .risk-bar[data-level="warn"] { fill: var(--ca-amber); }
 .risk-bar[data-level="alarm"] { fill: var(--ca-red); }
 
-/* Crisp Semicircle Automotive Dial Gauge (-12°..+12°, ±4° Limit) */
+/* Studio Automotive Cockpit Semicircle Dial Gauge (-12°..+12°, ±4° Limit) */
 .sensor-reading-row {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  padding-top: 4px;
 }
 .sensor-metric {
   width: 100%;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
+  margin-bottom: 2px;
 }
-.sensor-metric span { font-size: 12px; color: var(--ca-muted); font-weight: 600; }
-.sensor-metric small { font-size: 12px; color: var(--ca-muted); font-weight: 650; }
+.sensor-metric span { font-size: 11.5px; color: var(--ca-muted); font-weight: 700; letter-spacing: 0.03em; }
+.sensor-metric small { font-size: 11.5px; color: var(--ca-muted); font-weight: 700; }
 .sensor-metric strong { display: none; }
 
 .crisp-dial-svg {
   width: 100%;
-  max-width: 340px;
+  max-width: 348px;
   height: auto;
   display: block;
   overflow: visible;
   shape-rendering: geometricPrecision;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.28));
 }
-.dial-plate { fill: color-mix(in srgb, var(--ca-surface-3) 55%, transparent); }
-.dial-track { fill: none; stroke: color-mix(in srgb, var(--ca-muted) 22%, transparent); stroke-width: 14; stroke-linecap: butt; }
-.dial-zone-ok { fill: none; stroke: #25d0b5; stroke-width: 14; stroke-linecap: butt; }
-.dial-zone-warn { fill: none; stroke: #f5b33d; stroke-width: 14; stroke-linecap: butt; }
-.dial-zone-alarm { fill: none; stroke: #ff5460; stroke-width: 14; stroke-linecap: butt; opacity: 0.92; }
-.dial-limit-line { stroke: #ff6b75; stroke-width: 2.2; stroke-dasharray: 4, 3; }
-.dial-tick-major { stroke: var(--ca-ink); stroke-width: 2; stroke-linecap: round; opacity: 0.85; }
-.dial-tick-minor { stroke: var(--ca-muted); stroke-width: 1.2; stroke-linecap: round; opacity: 0.55; }
+.dial-bezel-outer { stroke: rgba(154, 200, 224, 0.35); stroke-width: 1.2; }
+.dial-face-bg { stroke: rgba(255, 255, 255, 0.07); stroke-width: 1; }
+.dial-inner-ring { fill: none; stroke: rgba(130, 186, 214, 0.14); stroke-width: 1.2; }
+.dial-track { fill: none; stroke: rgba(130, 175, 200, 0.16); stroke-width: 12; stroke-linecap: butt; }
+.dial-zone-ok { fill: none; stroke: #1fd1b5; stroke-width: 10; stroke-linecap: butt; opacity: 0.9; }
+.dial-zone-warn { fill: none; stroke: #f5b33d; stroke-width: 10; stroke-linecap: butt; opacity: 0.92; }
+.dial-zone-alarm { fill: none; stroke: #ff4d5a; stroke-width: 10; stroke-linecap: butt; opacity: 0.92; }
+.dial-live-sweep { fill: none; stroke: #2de6ca; stroke-width: 6; stroke-linecap: round; opacity: 0.85; filter: drop-shadow(0 0 6px rgba(45, 230, 202, 0.65)); }
+.dial-limit-line { stroke: #ff6b75; stroke-width: 2; stroke-dasharray: 4 3; opacity: 0.9; }
+.dial-tick-major { stroke: #d8ecf6; stroke-width: 2; stroke-linecap: round; opacity: 0.88; }
+.dial-tick-minor { stroke: #7fa5bb; stroke-width: 1.2; stroke-linecap: round; opacity: 0.55; }
 .dial-tick-limit { stroke: #ff5c66; stroke-width: 2.8; stroke-linecap: round; }
-.dial-lbl { font-size: 12px; font-weight: 700; fill: var(--ca-muted); font-variant-numeric: tabular-nums; }
-.dial-lbl-zero { font-size: 13px; font-weight: 850; fill: var(--ca-ink); }
-.dial-lbl-limit { font-size: 13.5px; font-weight: 900; fill: #ff6470; }
+.dial-lbl { font-size: 11.5px; font-weight: 700; fill: var(--ca-muted); font-variant-numeric: tabular-nums; }
+.dial-lbl-zero { font-size: 13px; font-weight: 900; fill: var(--ca-ink); }
+.dial-lbl-limit { font-size: 13px; font-weight: 900; fill: #ff6470; }
 html[data-theme="light"] .dial-lbl-limit { fill: #c62432; }
+html[data-theme="light"] .crisp-dial-svg { filter: drop-shadow(0 6px 14px rgba(15, 42, 60, 0.16)); }
 
-/* Zero-lag snappy needle (60ms linear) */
+/* Zero-lag snappy metallic needle (60ms linear) */
 .dial-needle { transition: transform 0.06s linear; }
-.dial-needle-blade { fill: #34e0c8; filter: drop-shadow(0 0 5px rgba(52, 224, 200, 0.5)); }
-.dial-hub-outer { fill: var(--ca-surface); stroke: #34e0c8; stroke-width: 3; }
-.dial-hub-inner { fill: var(--ca-ink); }
-.dial-readout { font-size: 28px; font-weight: 900; fill: var(--ca-ink); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.dial-needle-blade { fill: #34e6cc; filter: drop-shadow(0 0 6px rgba(52, 230, 204, 0.6)); }
+.dial-needle-highlight { stroke: rgba(255, 255, 255, 0.72); stroke-width: 1.2; stroke-linecap: round; }
+.dial-hub-outer { stroke: #34e6cc; stroke-width: 2.2; }
+.dial-hub-inner { fill: #0d1f2b; }
 
-.crisp-dial-svg[data-state="normal"] .dial-readout { fill: var(--ca-teal); }
+.dial-readout-box { fill: #091722; stroke: rgba(114, 178, 209, 0.38); stroke-width: 1.3; }
+.dial-readout { font-size: 26px; font-weight: 900; fill: #eef8fc; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+.crisp-dial-svg[data-state="normal"] .dial-readout { fill: #38e8ce; }
+.crisp-dial-svg[data-state="normal"] .dial-readout-box { stroke: rgba(56, 232, 206, 0.45); }
+
 .crisp-dial-svg[data-state="confirming"] .dial-needle-blade,
-.crisp-dial-svg[data-state="warning"] .dial-needle-blade { fill: #f5b33d; filter: drop-shadow(0 0 6px rgba(245, 179, 61, 0.55)); }
+.crisp-dial-svg[data-state="warning"] .dial-needle-blade { fill: #ffbe47; filter: drop-shadow(0 0 7px rgba(255, 190, 71, 0.68)); }
+.crisp-dial-svg[data-state="confirming"] .dial-live-sweep,
+.crisp-dial-svg[data-state="warning"] .dial-live-sweep { stroke: #ffbe47; filter: drop-shadow(0 0 7px rgba(255, 190, 71, 0.7)); }
 .crisp-dial-svg[data-state="confirming"] .dial-hub-outer,
-.crisp-dial-svg[data-state="warning"] .dial-hub-outer { stroke: #f5b33d; }
+.crisp-dial-svg[data-state="warning"] .dial-hub-outer { stroke: #ffbe47; }
 .crisp-dial-svg[data-state="confirming"] .dial-readout,
-.crisp-dial-svg[data-state="warning"] .dial-readout { fill: var(--ca-amber); }
+.crisp-dial-svg[data-state="warning"] .dial-readout { fill: #ffbe47; }
+.crisp-dial-svg[data-state="confirming"] .dial-readout-box,
+.crisp-dial-svg[data-state="warning"] .dial-readout-box { stroke: rgba(255, 190, 71, 0.55); }
 
 .crisp-dial-svg[data-state="alarm"] .dial-needle-blade,
-.crisp-dial-svg[data-state="sensor_error"] .dial-needle-blade { fill: #ff5460; filter: drop-shadow(0 0 8px rgba(255, 84, 96, 0.7)); }
+.crisp-dial-svg[data-state="sensor_error"] .dial-needle-blade { fill: #ff525f; filter: drop-shadow(0 0 9px rgba(255, 82, 95, 0.8)); }
+.crisp-dial-svg[data-state="alarm"] .dial-live-sweep,
+.crisp-dial-svg[data-state="sensor_error"] .dial-live-sweep { stroke: #ff525f; filter: drop-shadow(0 0 8px rgba(255, 82, 95, 0.85)); }
 .crisp-dial-svg[data-state="alarm"] .dial-hub-outer,
-.crisp-dial-svg[data-state="sensor_error"] .dial-hub-outer { stroke: #ff5460; }
+.crisp-dial-svg[data-state="sensor_error"] .dial-hub-outer { stroke: #ff525f; }
 .crisp-dial-svg[data-state="alarm"] .dial-readout,
-.crisp-dial-svg[data-state="sensor_error"] .dial-readout { fill: var(--ca-red); }
+.crisp-dial-svg[data-state="sensor_error"] .dial-readout { fill: #ff626e; }
+.crisp-dial-svg[data-state="alarm"] .dial-readout-box,
+.crisp-dial-svg[data-state="sensor_error"] .dial-readout-box { fill: #2b0c12; stroke: #ff5c66; }
 
 .crisp-dial-svg[data-state="offline"] .dial-needle,
-.crisp-dial-svg[data-state="stale"] .dial-needle { opacity: 0.28; }
+.crisp-dial-svg[data-state="stale"] .dial-needle { opacity: 0.32; }
+.crisp-dial-svg[data-state="offline"] .dial-readout,
+.crisp-dial-svg[data-state="stale"] .dial-readout { fill: #80a0b4; }
 
 .gauge-track { stroke: color-mix(in srgb, var(--ca-muted) 26%, transparent); }
 .gauge-normal { stroke: var(--ca-teal); }

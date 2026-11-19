@@ -17,7 +17,7 @@ const files = [
   ['dist/remote.mjs', 'javascript'],
 ];
 
-let md = `# CargoAlert v3.1（雙感知器＋互動式貨車配置模型＋4° 警報＋遠端重設基準值）網站更新（合併檔）
+let md = `# CargoAlert v3.3（雙感知器＋互動式貨車配置模型＋4° 警報＋遠端重設基準值）網站更新（合併檔）
 
 請把下列每個檔案依路徑完整覆蓋（或新增）到 Site source（\`cargoalert-wifi-entry\`），再執行 \`node scripts/build-cloud.mjs\` 重建 \`dist/server/index.js\`（務必確認新檔 \`dist/cargo-model.mjs\` 與 \`dist/v3-theme.css\` 也被打包進 \`ASSETS\`）後發布。
 
@@ -34,6 +34,6 @@ for (const [rel, lang] of files) {
   md += `## 檔案：${rel}\n\n\`\`\`${lang}\n${content}${content.endsWith('\n') ? '' : '\n'}\`\`\`\n\n`;
 }
 
-const outMd = join(desktop, 'CargoAlert_v3.1_網站更新_合併.md');
+const outMd = join(desktop, 'CargoAlert_v3.3_網站更新_合併.md');
 writeFileSync(outMd, md, 'utf8');
 console.log(`Created ${outMd} (${statSync(outMd).size} bytes)`);
