@@ -4,13 +4,13 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#24466b"><meta name="description" content="透過 BLE 連接 CargoAlert 雙感知器（一號／二號 AS5600），搭配互動式貨車配置模型即時監測搖臂角度與一鍵重設基準值。">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'">
-<title>貨物鬆脫警示器 v3.4｜雙感知器藍牙監測與貨車模型</title>
-<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="design.css"><link rel="stylesheet" href="clarity.css"><link rel="stylesheet" href="experience.css"><link rel="stylesheet" href="connection-methods.css"><link rel="stylesheet" href="palette.css"><link rel="stylesheet" href="remote.css"><link rel="stylesheet" href="v3-theme.css?v=3.4">
+<title>貨物鬆脫警示器 v3.5｜雙感知器藍牙監測與貨車模型</title>
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="design.css"><link rel="stylesheet" href="clarity.css"><link rel="stylesheet" href="experience.css"><link rel="stylesheet" href="connection-methods.css"><link rel="stylesheet" href="palette.css"><link rel="stylesheet" href="remote.css"><link rel="stylesheet" href="v3-theme.css?v=3.5">
 </head>
 <body>
-<header><div class="brand"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M11 7H7v18h18v-4M13 5h14v14H13z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="m18 10 4 4-4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>貨物鬆脫警示器</strong><small>CargoAlert v3.4 · 雙感知器即時監測</small></div></div><nav aria-label="主要導覽"><a class="nav-active" href="#monitor">藍牙雙感知器</a><a href="#cargoModelSection">貨車配置模型</a><a href="remote.html">4G 遠端監測</a><a href="#events-section">事件紀錄</a><button id="themeToggle" type="button" class="theme-toggle-btn" aria-pressed="false">☀️ 淺色模式</button></nav></header>
+<header><div class="brand"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M11 7H7v18h18v-4M13 5h14v14H13z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="m18 10 4 4-4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>貨物鬆脫警示器</strong><small>CargoAlert v3.5 · 雙感知器即時監測</small></div></div><nav aria-label="主要導覽"><a class="nav-active" href="#monitor">藍牙雙感知器</a><a href="#cargoModelSection">貨車配置模型</a><a href="remote.html">4G 遠端監測</a><a href="#events-section">事件紀錄</a><button id="themeToggle" type="button" class="theme-toggle-btn" aria-pressed="false">☀️ 淺色模式</button></nav></header>
 <main>
-<div class="intro"><div><p class="eyebrow">CARGOALERT v3.4 / DUAL-AS5600 WORKBENCH</p><h1>雙感知器即時監測<span class="title-dot">.</span></h1><p>單一 ESP32 同時監測一號與二號 AS5600；拖曳或點擊貨車模型擺放位置，4° 即時警報並可直接在網站重設基準值。</p></div><div class="intro-aside"><span class="prototype">v3.4 雙感知器 · 4° 警報版</span><span>藍牙／Wi-Fi · 近距離操作</span></div></div>
+<div class="intro"><div><p class="eyebrow">CARGOALERT v3.5 / DUAL-AS5600 WORKBENCH</p><h1>雙感知器即時監測<span class="title-dot">.</span></h1><p>單一 ESP32 同時監測一號與二號 AS5600；拖曳或點擊貨車模型擺放位置，4° 即時警報並可直接在網站重設基準值。</p></div><div class="intro-aside"><span class="prototype">v3.5 雙感知器 · 4° 警報版</span><span>藍牙／Wi-Fi · 近距離操作</span></div></div>
 
 <section id="connection" class="connection" aria-labelledby="connect-title"><div><h2 id="connect-title"><span class="connection-dot" aria-hidden="true"></span>藍牙連線（同時讀取一號與二號感知器）</h2><p><span id="connectionText">尚未連接</span> · <span id="deviceName">CargoAlert</span></p></div><div class="actions"><button id="connect">連接裝置</button><button id="disconnect" class="secondary" disabled>中斷連線</button><button id="bleDemoToggle" type="button" class="secondary" aria-pressed="false">🎮 展示模擬</button></div><p id="compatibility" class="notice" role="status"></p></section>
 <section id="bleDemoPanel" class="card demo-panel" hidden>
@@ -149,5 +149,5 @@
 </main>
 <dialog id="clearDialog" aria-labelledby="clear-title"><h2 id="clear-title">清除全部事件紀錄？</h2><p>只清除此瀏覽器的全部分類，無法復原；不影響 ESP32。</p><div class="dialog-actions"><button id="cancelClear" class="secondary">保留紀錄</button><button id="confirmClear">確認清除</button></div></dialog>
 <footer>貨物鬆脫警示器 v3.4 · 雙感知器藍牙即時監測與貨車配置模型</footer>
-<script type="module" src="app.mjs?v=3.4"></script>
+<script type="module" src="app.mjs?v=3.5"></script>
 </body></html>

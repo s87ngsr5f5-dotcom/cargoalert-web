@@ -2,8 +2,8 @@ import {connectionHelp} from './compatibility.mjs';
 import {UUID,STATES,FAULTS,parseStatus,parseReply,isFresh,pruneEvents} from './protocol.mjs';
 import {createAlerts} from './alerts.mjs';
 import {EVENT_TYPES,eventType,normalizeEvents,eventsCSV} from './experience.mjs';
-import {createCargoModel,initThemeToggle} from './cargo-model.mjs?v=3.4';
-import {buildDialGauge,setDialGauge} from './dial-gauge.mjs?v=3.4';
+import {createCargoModel,initThemeToggle} from './cargo-model.mjs?v=3.5';
+import {buildDialGauge,setDialGauge} from './dial-gauge.mjs?v=3.5';
 
 initThemeToggle('themeToggle');
 buildDialGauge(document.getElementById('bleGauge1'), 'bleDial1');

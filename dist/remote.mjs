@@ -1,6 +1,6 @@
 import {createRemoteLineControl} from './remote-control.mjs';
-import {createCargoModel,initThemeToggle} from './cargo-model.mjs?v=3.4';
-import {buildDialGauge,setDialGauge} from './dial-gauge.mjs?v=3.4';
+import {createCargoModel,initThemeToggle} from './cargo-model.mjs?v=3.5';
+import {buildDialGauge,setDialGauge} from './dial-gauge.mjs?v=3.5';
 
 initThemeToggle('themeToggle');
 buildDialGauge(document.getElementById('remoteAngleGauge1'), 'remoteDial1');
