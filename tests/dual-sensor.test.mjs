@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { api, hashToken } from '../backend/api.mjs';
+import { scheduleAlarmTonePattern } from '../dist/alerts.mjs';
 
 function makeDb() {
   const raw = new DatabaseSync(':memory:');
@@ -107,4 +108,35 @@ test('dual-sensor reports, status, events, and CSV preserve Sensor #1 and #2 ide
   assert.equal(cmds.commands[0].state, 'executed');
   assert.equal(cmds.commands[0].type, 'recalibrate');
   assert.equal(cmds.commands[0].result, 'OK');
+});
+
+test('scheduleAlarmTonePattern generates distinct frequencies and rhythms for Sensor #1, #2, and both', () => {
+  function captureTones(mask) {
+    const tones = [];
+    const mockCtx = {
+      state: 'running',
+      currentTime: 0,
+      destination: {},
+      createOscillator() {
+        const osc = { type: '', frequency: { value: 0 }, connect() {}, disconnect() {}, start(t) { tones.push({ freq: osc.frequency.value, type: osc.type, t: +t.toFixed(2) }); }, stop() {} };
+        return osc;
+      },
+      createGain() {
+        return { gain: { setValueAtTime() {}, linearRampToValueAtTime() {} }, connect() {}, disconnect() {} };
+      },
+    };
+    scheduleAlarmTonePattern(mockCtx, mask);
+    return tones;
+  }
+
+  const s1 = captureTones(1);
+  const s2 = captureTones(2);
+  const both = captureTones(3);
+  assert.equal(s1.length, 3);
+  assert.equal(s2.length, 6);
+  assert.equal(both.length, 6);
+  assert.ok(s1.every(x => x.freq > 900));
+  assert.ok(s2.every(x => x.freq < 650));
+  assert.notDeepEqual(s1.map(x => x.freq), s2.map(x => x.freq));
+  assert.ok(both.some(x => x.freq > 900) && both.some(x => x.freq < 650));
 });

@@ -1,6 +1,7 @@
 import {createRemoteLineControl} from './remote-control.mjs';
 import {createCargoModel,initThemeToggle} from './cargo-model.mjs?v=3.5';
 import {buildDialGauge,setDialGauge} from './dial-gauge.mjs?v=3.5';
+import {scheduleAlarmTonePattern} from './alerts.mjs?v=3.5';
 
 initThemeToggle('themeToggle');
 buildDialGauge(document.getElementById('remoteAngleGauge1'), 'remoteDial1');
@@ -64,20 +65,13 @@ function extractDualSensors(snap){
  return [{...snap,sensorId:snap.sensorId||1,sensorName:snap.sensorName||'一號感知器'},null];
 }
 
-function playAlarmBeep(){
+function playAlarmBeep(mask=1){
  if(!soundEnabled)return;
  try{
   const AudioCtx=window.AudioContext||window.webkitAudioContext;
   audioContext??=new AudioCtx();
   if(audioContext.state==='suspended')audioContext.resume();
-  for(let i=0;i<3;i++){
-   const osc=audioContext.createOscillator(),gain=audioContext.createGain();
-   osc.type='triangle';osc.frequency.value=880;
-   const start=audioContext.currentTime+i*0.25;
-   gain.gain.setValueAtTime(0.2,start);gain.gain.linearRampToValueAtTime(0,start+0.18);
-   osc.connect(gain);gain.connect(audioContext.destination);
-   osc.start(start);osc.stop(start+0.2);
-  }
+  scheduleAlarmTonePattern(audioContext,mask);
  }catch{}
 }
 
@@ -199,7 +193,8 @@ function state(){
     :`相對角度偏移 ${angleText}`;
    $('remoteAlarmTitle').textContent=alarming.length>1?'🚨 一號與二號感知器同時鬆脫警報！':alarming.length===1?`⚠️ ${sensorNameOf(alarming[0].id)}（${alarming[0].loc}）鬆脫警報！`:'⚠️ 貨物鬆脫警報！';
    $('remoteAlarmText').textContent=`${desc}，請立即停車檢查對應位置之貨物固定束帶！`;
-   if(!alarmAcknowledged&&!alarmAudibleActive){alarmAudibleActive=true;playAlarmBeep();}
+   const soundMask=(alarming.some(a=>a.id===1)?1:0)|(alarming.some(a=>a.id===2)?2:0)||1;
+   if(!alarmAcknowledged&&!alarmAudibleActive){alarmAudibleActive=true;playAlarmBeep(soundMask);}
   }else{
    banner.hidden=true;if(!stale){alarmAudibleActive=false;alarmAcknowledged=false;alarmKey='';}
   }
@@ -703,7 +698,7 @@ $('remoteSoundToggle')?.addEventListener('click',()=>{
  if(btn){
   btn.textContent=soundEnabled?'🔔 提示音：開':'🔔 提示音：關';
   btn.setAttribute('aria-pressed',String(soundEnabled));
-  if(soundEnabled)playAlarmBeep();
+  if(soundEnabled)playAlarmBeep(4);
  }
 });
 

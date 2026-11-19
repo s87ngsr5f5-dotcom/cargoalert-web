@@ -11,6 +11,7 @@ const files = [
   ['dist/v3-theme.css', 'css'],
   ['dist/protocol.mjs', 'javascript'],
   ['dist/index.html', 'html'],
+  ['dist/alerts.mjs', 'javascript'],
   ['dist/app.mjs', 'javascript'],
   ['dist/remote.html', 'html'],
   ['dist/remote.css', 'css'],

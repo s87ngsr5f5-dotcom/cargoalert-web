@@ -1,6 +1,6 @@
 import {connectionHelp} from './compatibility.mjs';
 import {UUID,STATES,FAULTS,parseStatus,parseReply,isFresh,pruneEvents} from './protocol.mjs';
-import {createAlerts} from './alerts.mjs';
+import {createAlerts} from './alerts.mjs?v=3.5';
 import {EVENT_TYPES,eventType,normalizeEvents,eventsCSV} from './experience.mjs';
 import {createCargoModel,initThemeToggle} from './cargo-model.mjs?v=3.5';
 import {buildDialGauge,setDialGauge} from './dial-gauge.mjs?v=3.5';
@@ -222,7 +222,10 @@ function acceptSensor(idx, value){
       record(`[${name}] ${parsed.fault ? '感測異常 · ' + FAULTS[parsed.fault] : STATES[parsed.state]}`, undefined, parsed);
       lastKeys[idx] = sk;
     }
-    if(connected && parsed.state === 'A' && parsed.fault === 0) alerts.observe(parsed);
+    const nowMs = Date.now();
+    const aS1 = sensors[0] && isFresh(lastAt[0], nowMs) ? sensors[0] : null;
+    const aS2 = sensors[1] && isFresh(lastAt[1], nowMs) ? sensors[1] : null;
+    if(connected) alerts.observeDual(aS1, aS2, cargoModel.formatLocation(1), cargoModel.formatLocation(2));
     update();
   } catch(e){
     message(e.message, true);
@@ -237,8 +240,8 @@ function acceptCombined(value){
     if(!dualSupported){
       sensors[0] = parsed;
       lastAt[0] = lastCombined;
+      if(connected) alerts.observe(parsed);
     }
-    if(connected) alerts.observe(parsed);
     update();
   } catch(e){
     message(e.message, true);
@@ -395,7 +398,7 @@ function applyBleDemo(){
   sensors = [mk(a1), mk(a2)];
   statusCombined = Math.abs(a2) > Math.abs(a1) ? sensors[1] : sensors[0];
   lastAt = [Date.now(), Date.now()]; lastCombined = Date.now();
-  alerts.observe(statusCombined);
+  alerts.observeDual(sensors[0], sensors[1], cargoModel.formatLocation(1), cargoModel.formatLocation(2));
   update();
 }
 $('bleDemoToggle')?.addEventListener('click', ()=>{
