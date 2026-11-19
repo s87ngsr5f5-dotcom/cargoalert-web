@@ -353,7 +353,71 @@ html[data-theme="light"] .model-picker-bar .picker-btn.picker-s2[aria-pressed="t
 .risk-bar[data-level="warn"] { fill: var(--ca-amber); }
 .risk-bar[data-level="alarm"] { fill: var(--ca-red); }
 
-/* Gauge SVG Contrast for Dark & Light */
+/* Crisp Semicircle Automotive Dial Gauge (-12°..+12°, ±4° Limit) */
+.sensor-reading-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.sensor-metric {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.sensor-metric span { font-size: 12px; color: var(--ca-muted); font-weight: 600; }
+.sensor-metric small { font-size: 12px; color: var(--ca-muted); font-weight: 650; }
+.sensor-metric strong { display: none; }
+
+.crisp-dial-svg {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  display: block;
+  overflow: visible;
+  shape-rendering: geometricPrecision;
+}
+.dial-plate { fill: color-mix(in srgb, var(--ca-surface-3) 55%, transparent); }
+.dial-track { fill: none; stroke: color-mix(in srgb, var(--ca-muted) 22%, transparent); stroke-width: 14; stroke-linecap: butt; }
+.dial-zone-ok { fill: none; stroke: #25d0b5; stroke-width: 14; stroke-linecap: butt; }
+.dial-zone-warn { fill: none; stroke: #f5b33d; stroke-width: 14; stroke-linecap: butt; }
+.dial-zone-alarm { fill: none; stroke: #ff5460; stroke-width: 14; stroke-linecap: butt; opacity: 0.92; }
+.dial-limit-line { stroke: #ff6b75; stroke-width: 2.2; stroke-dasharray: 4, 3; }
+.dial-tick-major { stroke: var(--ca-ink); stroke-width: 2; stroke-linecap: round; opacity: 0.85; }
+.dial-tick-minor { stroke: var(--ca-muted); stroke-width: 1.2; stroke-linecap: round; opacity: 0.55; }
+.dial-tick-limit { stroke: #ff5c66; stroke-width: 2.8; stroke-linecap: round; }
+.dial-lbl { font-size: 12px; font-weight: 700; fill: var(--ca-muted); font-variant-numeric: tabular-nums; }
+.dial-lbl-zero { font-size: 13px; font-weight: 850; fill: var(--ca-ink); }
+.dial-lbl-limit { font-size: 13.5px; font-weight: 900; fill: #ff6470; }
+html[data-theme="light"] .dial-lbl-limit { fill: #c62432; }
+
+/* Zero-lag snappy needle (60ms linear) */
+.dial-needle { transition: transform 0.06s linear; }
+.dial-needle-blade { fill: #34e0c8; filter: drop-shadow(0 0 5px rgba(52, 224, 200, 0.5)); }
+.dial-hub-outer { fill: var(--ca-surface); stroke: #34e0c8; stroke-width: 3; }
+.dial-hub-inner { fill: var(--ca-ink); }
+.dial-readout { font-size: 28px; font-weight: 900; fill: var(--ca-ink); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+.crisp-dial-svg[data-state="normal"] .dial-readout { fill: var(--ca-teal); }
+.crisp-dial-svg[data-state="confirming"] .dial-needle-blade,
+.crisp-dial-svg[data-state="warning"] .dial-needle-blade { fill: #f5b33d; filter: drop-shadow(0 0 6px rgba(245, 179, 61, 0.55)); }
+.crisp-dial-svg[data-state="confirming"] .dial-hub-outer,
+.crisp-dial-svg[data-state="warning"] .dial-hub-outer { stroke: #f5b33d; }
+.crisp-dial-svg[data-state="confirming"] .dial-readout,
+.crisp-dial-svg[data-state="warning"] .dial-readout { fill: var(--ca-amber); }
+
+.crisp-dial-svg[data-state="alarm"] .dial-needle-blade,
+.crisp-dial-svg[data-state="sensor_error"] .dial-needle-blade { fill: #ff5460; filter: drop-shadow(0 0 8px rgba(255, 84, 96, 0.7)); }
+.crisp-dial-svg[data-state="alarm"] .dial-hub-outer,
+.crisp-dial-svg[data-state="sensor_error"] .dial-hub-outer { stroke: #ff5460; }
+.crisp-dial-svg[data-state="alarm"] .dial-readout,
+.crisp-dial-svg[data-state="sensor_error"] .dial-readout { fill: var(--ca-red); }
+
+.crisp-dial-svg[data-state="offline"] .dial-needle,
+.crisp-dial-svg[data-state="stale"] .dial-needle { opacity: 0.28; }
+
 .gauge-track { stroke: color-mix(in srgb, var(--ca-muted) 26%, transparent); }
 .gauge-normal { stroke: var(--ca-teal); }
 .gauge-alarm { stroke: var(--ca-red); opacity: 0.78; }

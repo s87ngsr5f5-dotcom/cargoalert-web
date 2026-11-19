@@ -3,8 +3,11 @@ import {UUID,STATES,FAULTS,parseStatus,parseReply,isFresh,pruneEvents} from './p
 import {createAlerts} from './alerts.mjs';
 import {EVENT_TYPES,eventType,normalizeEvents,eventsCSV} from './experience.mjs';
 import {createCargoModel,initThemeToggle} from './cargo-model.mjs';
+import {buildDialGauge,setDialGauge} from './dial-gauge.mjs';
 
 initThemeToggle('themeToggle');
+buildDialGauge(document.getElementById('bleGauge1'), 'bleDial1');
+buildDialGauge(document.getElementById('bleGauge2'), 'bleDial2');
 const $=id=>document.getElementById(id), decoder=new TextDecoder(), encoder=new TextEncoder();
 let device=null, statusChar=null, sensor1Char=null, sensor2Char=null, commandChar=null, replyChar=null;
 let connected=false, busy=false, control=false, dualSupported=false, demoMode=false;
@@ -85,8 +88,9 @@ function bleToModelSample(id, s, fresh){
 function renderBleSensor(idx, s, fresh){
   const n = idx + 1;
   const card = $(`bleCard${n}`), pill = $(`bleState${n}`), angleEl = $(`bleAngle${n}`);
-  const svg = $(`bleGauge${n}`), needle = $(`bleNeedle${n}`), valEl = $(`bleGaugeVal${n}`), subEl = $(`bleStatusText${n}`);
+  const svg = $(`bleGauge${n}`), subEl = $(`bleStatusText${n}`);
   const riskFill = $(`bleRiskFill${n}`), riskText = $(`bleRiskText${n}`);
+  const dialPrefix = `bleDial${n}`;
   if(!svg) return;
 
   const setRisk = (deg, active) => {
@@ -100,15 +104,15 @@ function renderBleSensor(idx, s, fresh){
 
   if(!connected && !demoMode){
     card.dataset.state='offline'; pill.dataset.state='offline'; pill.textContent='離線';
-    angleEl.textContent='—'; svg.dataset.state='offline'; needle.setAttribute('transform','rotate(0 120 122)');
-    valEl.textContent='—'; subEl.textContent=n===1?'GPIO21/22':'GPIO25/26';
+    angleEl.textContent='—'; subEl.textContent=n===1?'GPIO21/22':'GPIO25/26';
+    setDialGauge(svg, dialPrefix, null, 'offline');
     setRisk(null, false);
     return;
   }
   if(!s){
     card.dataset.state='offline'; pill.dataset.state='offline'; pill.textContent=dualSupported?'讀取中':'未接';
-    angleEl.textContent='—'; svg.dataset.state='offline'; needle.setAttribute('transform','rotate(0 120 122)');
-    valEl.textContent='—'; subEl.textContent=n===1?'GPIO21/22':'GPIO25/26';
+    angleEl.textContent='—'; subEl.textContent=n===1?'GPIO21/22':'GPIO25/26';
+    setDialGauge(svg, dialPrefix, null, 'offline');
     setRisk(null, false);
     return;
   }
@@ -123,17 +127,13 @@ function renderBleSensor(idx, s, fresh){
   pill.dataset.state = st;
   pill.textContent = label;
   angleEl.textContent = angleText;
-  svg.dataset.state = validAngle ? st : 'offline';
-  valEl.textContent = angleText;
+  setDialGauge(svg, dialPrefix, validAngle ? s.angle : null, validAngle ? st : 'offline');
   setRisk(s.angle, validAngle);
 
   if(!validAngle){
-    needle.setAttribute('transform','rotate(0 120 122)');
     subEl.textContent = !fresh ? '無訊號' : s.fault ? (FAULTS[s.fault]||'感測異常') : '需重設基準';
     return;
   }
-  const bounded = Math.max(-30, Math.min(30, s.angle));
-  needle.setAttribute('transform', `rotate(${(bounded*3).toFixed(1)} 120 122)`);
   subEl.textContent = st==='alarm' ? '鬆脫警報' : st==='confirming' ? '確認中 (800ms)' : '正常';
 }
 

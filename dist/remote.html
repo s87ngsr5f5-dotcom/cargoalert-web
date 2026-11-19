@@ -129,58 +129,40 @@
 <article id="sensorCard1" class="sensor-gauge-card" data-state="offline">
 <div class="sensor-card-head">
 <div>
-<span class="sensor-chip s1">一號感知器 #1</span>
-<span id="sensorLocBadge1" class="loc-badge">前左側</span>
+<span class="sensor-chip s1">#1 一號</span>
+<span id="sensorLocBadge1" class="loc-badge">前左</span>
 </div>
-<span id="sensorState1" class="sensor-state-pill" data-state="offline">尚未載入</span>
+<span id="sensorState1" class="sensor-state-pill" data-state="offline">離線</span>
 </div>
 <div class="sensor-reading-row">
 <div class="sensor-metric">
-<span>相對基準角度</span>
+<span>門檻 ±4°</span>
 <strong id="sensorAngle1">—</strong>
-<small id="angleGaugeStatus1">等待有效的已校正角度資料</small>
+<small id="angleGaugeStatus1">GPIO21/22</small>
 </div>
-<svg id="remoteAngleGauge1" class="mini-angle-gauge" viewBox="0 0 240 156" role="img" aria-label="一號感知器角度儀表" data-state="offline">
-<path class="gauge-track" d="M29 122 A91 91 0 0 1 211 122"/>
-<path class="gauge-alarm" d="M29 122 A91 91 0 0 1 101.1 33.0 M138.9 33.0 A91 91 0 0 1 211 122"/>
-<path class="gauge-normal" d="M101.1 33.0 A91 91 0 0 1 138.9 33.0"/>
-<path class="gauge-guide-line" d="M120 122 L120 25"/>
-<path class="gauge-threshold-line" d="M120 122 L101.1 33.0 M120 122 L138.9 33.0"/>
-<g class="gauge-ticks"><text x="24" y="142">−30°</text><text x="90" y="21" class="tick-alarm">−4°</text><text x="120" y="14" class="tick-base">0°</text><text x="150" y="21" class="tick-alarm">+4°</text><text x="216" y="142">+30°</text></g>
-<g id="angleNeedle1" class="gauge-needle" transform="rotate(0 120 122)"><line x1="120" y1="122" x2="120" y2="42"/><circle cx="120" cy="122" r="7"/></g>
-<text x="120" y="150" class="gauge-live-value" id="angleGaugeValue1" text-anchor="middle">—</text>
-</svg>
+<svg id="remoteAngleGauge1" class="mini-angle-gauge" viewBox="0 0 320 190" role="img" aria-label="一號感知器儀表" data-state="offline"></svg>
 </div>
-<div class="risk-meter"><div class="risk-meter-head"><span>4° 警報門檻安全餘裕</span><span id="remoteRiskText1">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="remoteRiskFill1" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
+<div class="risk-meter"><div class="risk-meter-head"><span>門檻 4°</span><span id="remoteRiskText1">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="remoteRiskFill1" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
 </article>
 
 <!-- Sensor 2 Card -->
 <article id="sensorCard2" class="sensor-gauge-card" data-state="offline">
 <div class="sensor-card-head">
 <div>
-<span class="sensor-chip s2">二號感知器 #2</span>
-<span id="sensorLocBadge2" class="loc-badge">後右側</span>
+<span class="sensor-chip s2">#2 二號</span>
+<span id="sensorLocBadge2" class="loc-badge">後右</span>
 </div>
-<span id="sensorState2" class="sensor-state-pill" data-state="offline">尚未載入</span>
+<span id="sensorState2" class="sensor-state-pill" data-state="offline">離線</span>
 </div>
 <div class="sensor-reading-row">
 <div class="sensor-metric">
-<span>相對基準角度</span>
+<span>門檻 ±4°</span>
 <strong id="sensorAngle2">—</strong>
-<small id="angleGaugeStatus2">等待有效的已校正角度資料</small>
+<small id="angleGaugeStatus2">GPIO25/26</small>
 </div>
-<svg id="remoteAngleGauge2" class="mini-angle-gauge" viewBox="0 0 240 156" role="img" aria-label="二號感知器角度儀表" data-state="offline">
-<path class="gauge-track" d="M29 122 A91 91 0 0 1 211 122"/>
-<path class="gauge-alarm" d="M29 122 A91 91 0 0 1 101.1 33.0 M138.9 33.0 A91 91 0 0 1 211 122"/>
-<path class="gauge-normal" d="M101.1 33.0 A91 91 0 0 1 138.9 33.0"/>
-<path class="gauge-guide-line" d="M120 122 L120 25"/>
-<path class="gauge-threshold-line" d="M120 122 L101.1 33.0 M120 122 L138.9 33.0"/>
-<g class="gauge-ticks"><text x="24" y="142">−30°</text><text x="90" y="21" class="tick-alarm">−4°</text><text x="120" y="14" class="tick-base">0°</text><text x="150" y="21" class="tick-alarm">+4°</text><text x="216" y="142">+30°</text></g>
-<g id="angleNeedle2" class="gauge-needle" transform="rotate(0 120 122)"><line x1="120" y1="122" x2="120" y2="42"/><circle cx="120" cy="122" r="7"/></g>
-<text x="120" y="150" class="gauge-live-value" id="angleGaugeValue2" text-anchor="middle">—</text>
-</svg>
+<svg id="remoteAngleGauge2" class="mini-angle-gauge" viewBox="0 0 320 190" role="img" aria-label="二號感知器儀表" data-state="offline"></svg>
 </div>
-<div class="risk-meter"><div class="risk-meter-head"><span>4° 警報門檻安全餘裕</span><span id="remoteRiskText2">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="remoteRiskFill2" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
+<div class="risk-meter"><div class="risk-meter-head"><span>門檻 4°</span><span id="remoteRiskText2">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="remoteRiskFill2" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
 </article>
 </div>
 

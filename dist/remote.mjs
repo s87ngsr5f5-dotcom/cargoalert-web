@@ -1,7 +1,10 @@
 import {createRemoteLineControl} from './remote-control.mjs';
 import {createCargoModel,initThemeToggle} from './cargo-model.mjs';
+import {buildDialGauge,setDialGauge} from './dial-gauge.mjs';
 
 initThemeToggle('themeToggle');
+buildDialGauge(document.getElementById('remoteAngleGauge1'), 'remoteDial1');
+buildDialGauge(document.getElementById('remoteAngleGauge2'), 'remoteDial2');
 
 const $=id=>document.getElementById(id),
 LABELS={stale:'資料過期／暫時失聯',uncalibrated:'未校正',normal:'正常',warning:'注意',confirming:'注意（超標確認中）',alarm:'鬆脫警報',sensor_error:'感測異常',offline:'尚未載入'},
@@ -80,8 +83,9 @@ function playAlarmBeep(){
 
 function updateSingleGauge(idx,sensor,stale){
  const card=$(`sensorCard${idx}`),pill=$(`sensorState${idx}`),angleEl=$(`sensorAngle${idx}`);
- const svg=$(`remoteAngleGauge${idx}`),needle=$(`angleNeedle${idx}`),value=$(`angleGaugeValue${idx}`),label=$(`angleGaugeStatus${idx}`);
+ const svg=$(`remoteAngleGauge${idx}`),label=$(`angleGaugeStatus${idx}`);
  const riskFill=$(`remoteRiskFill${idx}`),riskText=$(`remoteRiskText${idx}`);
+ const dialPrefix=`remoteDial${idx}`;
  if(!svg)return;
 
  const setRisk=(deg,active)=>{
@@ -95,12 +99,10 @@ function updateSingleGauge(idx,sensor,stale){
 
  if(!sensor){
   if(card)card.dataset.state='offline';
-  if(pill){pill.textContent='未接／舊版單感測';pill.dataset.state='offline';}
+  if(pill){pill.textContent='離線';pill.dataset.state='offline';}
   if(angleEl)angleEl.textContent='—';
-  svg.dataset.state='offline';
-  needle?.setAttribute('transform','rotate(0 120 122)');
-  if(value)value.textContent='—';
-  if(label)label.textContent='此裝置尚未回報二號感知器資料';
+  if(label)label.textContent=idx===1?'GPIO21/22':'GPIO25/26';
+  setDialGauge(svg,dialPrefix,null,'offline');
   setRisk(null,false);
   return;
  }
@@ -108,26 +110,22 @@ function updateSingleGauge(idx,sensor,stale){
  const st=stale?'stale':!sensor.valid?'sensor_error':!sensor.calibrated?'uncalibrated':(sensor.state||'normal');
  const validAngle=!stale&&sensor.valid&&sensor.calibrated&&Number.isFinite(sensor.delta);
  const angleText=validAngle?`${sensor.delta>0?'+':''}${sensor.delta.toFixed(1)}°`:'—';
+ const shortLbl={normal:'正常',warning:'注意',confirming:'確認中',alarm:'鬆脫',sensor_error:'異常',uncalibrated:'未校正',stale:'過期'};
 
  if(card)card.dataset.state=st;
- if(pill){pill.textContent=LABELS[st]||st;pill.dataset.state=st;}
+ if(pill){pill.textContent=shortLbl[st]||LABELS[st]||st;pill.dataset.state=st;}
  if(angleEl)angleEl.textContent=angleText;
- svg.dataset.state=validAngle?st:'offline';
+ setDialGauge(svg,dialPrefix,validAngle?sensor.delta:null,validAngle?st:'offline');
  setRisk(sensor.delta,validAngle);
 
  if(!validAngle){
-  needle?.setAttribute('transform','rotate(0 120 122)');
-  if(value)value.textContent='—';
   if(label)label.textContent=st==='stale'?'無訊號':st==='sensor_error'?`異常 (F${sensor.fault||1})`:st==='uncalibrated'?'未校正':'—';
   svg.setAttribute('aria-label',`${sensorNameOf(idx)}無角度資料`);
   return;
  }
- const bounded=Math.max(-30,Math.min(30,sensor.delta));
- needle?.setAttribute('transform',`rotate(${(bounded*3).toFixed(1)} 120 122)`);
- if(value)value.textContent=angleText;
  const magnitude=Math.abs(sensor.delta);
  if(label)label.textContent=st==='alarm'?'鬆脫警報':magnitude>=ALARM_THRESHOLD_DEG?'確認中 (800ms)':'正常';
- svg.setAttribute('aria-label',`${sensorNameOf(idx)}相對基準角度 ${angleText}`);
+ svg.setAttribute('aria-label',`${sensorNameOf(idx)} ${angleText}`);
 }
 
 function setRecalStatus(text,tone=''){
@@ -497,7 +495,7 @@ async function poll(run){
   }
   await control.refresh();
  }catch(e){if(run===generation)$('remoteMessage').textContent='部分資料處理失敗，稍後自動重試。';}
- finally{polling=false;if(token&&!demoMode){clearTimeout(timer);const current=generation;timer=setTimeout(()=>poll(current),5000);}}
+ finally{polling=false;if(token&&!demoMode){clearTimeout(timer);const current=generation;const nextMs=connectionFailed?3000:snapshot?.stale?2500:1000;timer=setTimeout(()=>poll(current),nextMs);}}
 }
 
 function clearProtectedData(){

@@ -7,6 +7,7 @@ const desktop = dirname(root);
 const files = [
   ['backend/api.mjs', 'javascript'],
   ['dist/cargo-model.mjs', 'javascript'],
+  ['dist/dial-gauge.mjs', 'javascript'],
   ['dist/v3-theme.css', 'css'],
   ['dist/protocol.mjs', 'javascript'],
   ['dist/index.html', 'html'],
