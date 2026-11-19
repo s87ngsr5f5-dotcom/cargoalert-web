@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#24466b"><meta name="description" content="透過 BLE 連接 CargoAlert 雙感知器（一號／二號 AS5600），搭配互動式貨車配置模型即時監測搖臂角度與一鍵重設基準值。">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'">
+<title>貨物鬆脫警示器 v3.0｜雙感知器藍牙監測與貨車模型</title>
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="design.css"><link rel="stylesheet" href="clarity.css"><link rel="stylesheet" href="experience.css"><link rel="stylesheet" href="connection-methods.css"><link rel="stylesheet" href="palette.css"><link rel="stylesheet" href="remote.css"><link rel="stylesheet" href="v3-theme.css">
+</head>
+<body>
+<header><div class="brand"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M11 7H7v18h18v-4M13 5h14v14H13z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="m18 10 4 4-4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>貨物鬆脫警示器</strong><small>CargoAlert v3.1 · 雙感知器即時監測</small></div></div><nav aria-label="主要導覽"><a class="nav-active" href="#monitor">藍牙雙感知器</a><a href="#cargoModelSection">貨車配置模型</a><a href="remote.html">4G 遠端監測</a><a href="#events-section">事件紀錄</a><button id="themeToggle" type="button" class="theme-toggle-btn" aria-pressed="false">☀️ 淺色模式</button></nav></header>
+<main>
+<div class="intro"><div><p class="eyebrow">CARGOALERT v3.1 / DUAL-AS5600 WORKBENCH</p><h1>雙感知器即時監測<span class="title-dot">.</span></h1><p>單一 ESP32 同時監測一號與二號 AS5600；拖曳或點擊貨車模型擺放位置，4° 即時警報並可直接在網站重設基準值。</p></div><div class="intro-aside"><span class="prototype">v3.1 雙感知器 · 4° 警報版</span><span>藍牙／Wi-Fi · 近距離操作</span></div></div>
+
+<section id="connection" class="connection" aria-labelledby="connect-title"><div><h2 id="connect-title"><span class="connection-dot" aria-hidden="true"></span>藍牙連線（同時讀取一號與二號感知器）</h2><p><span id="connectionText">尚未連接</span> · <span id="deviceName">CargoAlert</span></p></div><div class="actions"><button id="connect">連接裝置</button><button id="disconnect" class="secondary" disabled>中斷連線</button><button id="bleDemoToggle" type="button" class="secondary" aria-pressed="false">🎮 展示模擬</button></div><p id="compatibility" class="notice" role="status"></p></section>
+<section id="bleDemoPanel" class="card demo-panel" hidden>
+<div class="section-head"><h2>🎮 專題展示模擬模式（免接實體藍牙，即時聯動貨車模型與 4° 警報）</h2><span class="pill demo-pill">模擬運作中</span></div>
+<div class="demo-grid">
+<div class="demo-sensor-ctrl"><label for="bleDemoS1"><strong>一號感知器角度：</strong><span id="bleDemoV1">+0.6°</span><input id="bleDemoS1" type="range" min="-15" max="15" step="0.2" value="0.6"></label></div>
+<div class="demo-sensor-ctrl"><label for="bleDemoS2"><strong>二號感知器角度：</strong><span id="bleDemoV2">-0.4°</span><input id="bleDemoS2" type="range" min="-15" max="15" step="0.2" value="-0.4"></label></div>
+</div>
+<div class="demo-buttons">
+<button type="button" class="secondary" data-bledemo="normal">✅ 全部正常</button>
+<button type="button" class="secondary" data-bledemo="alarm1">⚠️ 一號鬆脫 (+5.8°)</button>
+<button type="button" class="secondary" data-bledemo="alarm2">⚠️ 二號鬆脫 (-6.4°)</button>
+<button type="button" class="secondary" data-bledemo="both">🚨 雙側同時鬆脫</button>
+</div>
+</section>
+<section id="iphoneHelp" class="card iphone-help" aria-labelledby="iphone-help-title" hidden><h2 id="iphone-help-title">iPhone 使用 Bluefy 連接藍牙</h2><p>目前瀏覽器無法直接連接藍牙。不想安裝 App，可改用 Wi-Fi 本機監測（<code>http://192.168.4.1/</code>）。若要用藍牙，請在 Bluefy 開啟本站網址。</p><div class="copy-address"><input id="siteAddress" type="url" readonly value="http://localhost:8787/"><button id="copySiteAddress" class="secondary">複製網址</button></div><p id="copyAddressResult" role="status" aria-live="polite"></p></section>
+
+<div id="message" class="message" role="status" aria-live="polite">先開啟 ESP32 電源，再按「連接裝置」選擇 CargoAlert 即可一次查看一號與二號感知器。</div>
+<section id="alarmBanner" class="alarm-banner" role="alert" aria-live="assertive" aria-atomic="true" hidden><div><strong id="alarmTitle">⚠️ 鬆脫警報</strong><p id="alarmText"></p></div><button id="ackAlarm" class="secondary">知道了／停止聲音</button></section>
+
+<!-- Interactive Truck / Cargo Sensor Placement Model -->
+<section id="cargoModelSection" class="card cargo-model-card" aria-labelledby="cargo-model-title">
+<div class="section-head">
+<h2 id="cargo-model-title">貨車與貨物感知器配置模型</h2>
+<div class="model-view-switch" role="group" aria-label="模型視角切換">
+<button id="viewTruck" type="button" class="seg-btn" aria-pressed="true">貨車貨斗俯視圖</button>
+<button id="viewCargo" type="button" class="seg-btn" aria-pressed="false">立體貨物模型</button>
+</div>
+</div>
+<p class="footnote">點選「放置一號感知器」或「放置二號感知器」後，直接點擊模型上的「＋」位置即可移動（點到另一顆自動對調）；連上藍牙後，模型上的束帶與紅光脈衝會即時同步顯示哪裡鬆脫。</p>
+<div class="model-layout">
+<div class="model-stage">
+<div class="model-picker-bar" role="group" aria-label="選擇要擺放的感知器">
+<button id="pickSensor1" type="button" class="picker-btn picker-s1" aria-pressed="true"><span class="picker-dot s1"></span>放置一號感知器 (#1)</button>
+<button id="pickSensor2" type="button" class="picker-btn picker-s2" aria-pressed="false"><span class="picker-dot s2"></span>放置二號感知器 (#2)</button>
+</div>
+<div id="cargoModelCanvas" class="cargo-model-canvas"></div>
+<p id="modelPlacementHint" class="footnote model-hint">直接點擊模型上的錨點擺放感知器。</p>
+</div>
+<aside class="model-sidebar">
+<h3>感知器位置設定</h3>
+<div class="placement-card placement-s1">
+<div class="placement-head"><span class="sensor-chip s1">一號感知器 #1</span><small>Wire · GPIO21/22</small></div>
+<label for="slotSelect1">安裝位置<select id="slotSelect1"></select></label>
+<label for="noteInput1">位置備註（選填）<input id="noteInput1" type="text" maxlength="24" placeholder="例如：前左主束帶"></label>
+</div>
+<div class="placement-card placement-s2">
+<div class="placement-head"><span class="sensor-chip s2">二號感知器 #2</span><small>Wire1 · GPIO25/26</small></div>
+<label for="slotSelect2">安裝位置<select id="slotSelect2"></select></label>
+<label for="noteInput2">位置備註（選填）<input id="noteInput2" type="text" maxlength="24" placeholder="例如：後右尾門束帶"></label>
+</div>
+<div class="preset-box">
+<span class="preset-title">常用貨車綁法快選</span>
+<div class="preset-btns">
+<button type="button" class="secondary preset-btn" data-preset="diagonal">對角固定</button>
+<button type="button" class="secondary preset-btn" data-preset="front">前側雙綁</button>
+<button type="button" class="secondary preset-btn" data-preset="left">左側雙綁</button>
+<button type="button" class="secondary preset-btn" data-preset="center">前後軸向</button>
+</div>
+</div>
+<p class="footnote">配置會自動儲存於本機瀏覽器，與「4G 遠端監測」頁共用同一套設定。</p>
+</aside>
+</div>
+</section>
+
+<!-- Dual-Sensor BLE Real-Time Monitor + One-Click Reset Baseline -->
+<section class="card monitoring" id="monitor" aria-labelledby="monitor-title">
+<div class="section-head">
+<h2 id="monitor-title"><span class="section-icon" aria-hidden="true">↗</span>藍牙雙感知器即時監測</h2>
+<span id="liveBadge" class="pill">等待連線</span>
+</div>
+<div id="state" class="state" data-state="offline">尚未連接</div>
+<p id="stateDetail">按上方「連接裝置」選擇 CargoAlert 後，下方會同時顯示一號與二號感知器即時讀值。</p>
+
+<div class="dual-gauge-grid">
+<article id="bleCard1" class="sensor-gauge-card" data-state="offline">
+<div class="sensor-card-head">
+<div><span class="sensor-chip s1">一號感知器 #1</span><span id="bleLoc1" class="loc-badge">前左側</span></div>
+<span id="bleState1" class="sensor-state-pill" data-state="offline">尚未連接</span>
+</div>
+<div class="sensor-reading-row">
+<div class="sensor-metric">
+<span>相對基準角度（門檻 ±4°）</span>
+<strong id="bleAngle1">—</strong>
+<small id="bleStatusText1">等待藍牙資料（GPIO21/22）</small>
+</div>
+<svg id="bleGauge1" class="mini-angle-gauge" viewBox="0 0 240 156" role="img" aria-label="一號感知器角度儀表" data-state="offline">
+<path class="gauge-track" d="M29 122 A91 91 0 0 1 211 122"/>
+<path class="gauge-alarm" d="M29 122 A91 91 0 0 1 101.1 33.0 M138.9 33.0 A91 91 0 0 1 211 122"/>
+<path class="gauge-normal" d="M101.1 33.0 A91 91 0 0 1 138.9 33.0"/>
+<path class="gauge-guide-line" d="M120 122 L120 25"/>
+<path class="gauge-threshold-line" d="M120 122 L101.1 33.0 M120 122 L138.9 33.0"/>
+<g class="gauge-ticks"><text x="24" y="142">−30°</text><text x="90" y="21" class="tick-alarm">−4°</text><text x="120" y="14" class="tick-base">0°</text><text x="150" y="21" class="tick-alarm">+4°</text><text x="216" y="142">+30°</text></g>
+<g id="bleNeedle1" class="gauge-needle" transform="rotate(0 120 122)"><line x1="120" y1="122" x2="120" y2="42"/><circle cx="120" cy="122" r="7"/></g>
+<text x="120" y="150" class="gauge-live-value" id="bleGaugeVal1" text-anchor="middle">—</text>
+</svg>
+</div>
+<div class="risk-meter"><div class="risk-meter-head"><span>4° 警報門檻安全餘裕</span><span id="bleRiskText1">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="bleRiskFill1" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
+</article>
+
+<article id="bleCard2" class="sensor-gauge-card" data-state="offline">
+<div class="sensor-card-head">
+<div><span class="sensor-chip s2">二號感知器 #2</span><span id="bleLoc2" class="loc-badge">後右側</span></div>
+<span id="bleState2" class="sensor-state-pill" data-state="offline">尚未連接</span>
+</div>
+<div class="sensor-reading-row">
+<div class="sensor-metric">
+<span>相對基準角度（門檻 ±4°）</span>
+<strong id="bleAngle2">—</strong>
+<small id="bleStatusText2">等待藍牙資料（GPIO25/26）</small>
+</div>
+<svg id="bleGauge2" class="mini-angle-gauge" viewBox="0 0 240 156" role="img" aria-label="二號感知器角度儀表" data-state="offline">
+<path class="gauge-track" d="M29 122 A91 91 0 0 1 211 122"/>
+<path class="gauge-alarm" d="M29 122 A91 91 0 0 1 101.1 33.0 M138.9 33.0 A91 91 0 0 1 211 122"/>
+<path class="gauge-normal" d="M101.1 33.0 A91 91 0 0 1 138.9 33.0"/>
+<path class="gauge-guide-line" d="M120 122 L120 25"/>
+<path class="gauge-threshold-line" d="M120 122 L101.1 33.0 M120 122 L138.9 33.0"/>
+<g class="gauge-ticks"><text x="24" y="142">−30°</text><text x="90" y="21" class="tick-alarm">−4°</text><text x="120" y="14" class="tick-base">0°</text><text x="150" y="21" class="tick-alarm">+4°</text><text x="216" y="142">+30°</text></g>
+<g id="bleNeedle2" class="gauge-needle" transform="rotate(0 120 122)"><line x1="120" y1="122" x2="120" y2="42"/><circle cx="120" cy="122" r="7"/></g>
+<text x="120" y="150" class="gauge-live-value" id="bleGaugeVal2" text-anchor="middle">—</text>
+</svg>
+</div>
+<div class="risk-meter"><div class="risk-meter-head"><span>4° 警報門檻安全餘裕</span><span id="bleRiskText2">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="bleRiskFill2" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
+</article>
+</div>
+
+<!-- Direct Reset Baseline Panel -->
+<div class="remote-recal-box" id="calibration">
+<div class="recal-head">
+<div>
+<h3>🎯 重設基準值（一次同時校正一號與二號）</h3>
+<p class="footnote">兩條束帶皆拉緊後，勾選確認即可直接按「重設基準值」送出藍牙指令給 ESP32（或長按實體按鈕 GPIO27 1 秒）。基準會存入 NVS 斷電保存。</p>
+</div>
+<span class="pill">基準斷電保存</span>
+</div>
+<div class="recal-controls">
+<label class="recal-check"><input id="tight" type="checkbox">已確認一號與二號束帶皆拉緊，搖臂位於正常位置</label>
+<button id="calibrate" type="button" disabled>重設基準值（一號與二號）</button>
+</div>
+<p id="controlNote" class="recal-status">尚未連線，請先按上方「連接裝置」。</p>
+<p id="calFeedback" class="operation-feedback" role="status" aria-live="polite"></p>
+</div>
+
+<div class="meta"><div><span>基準狀態</span><strong id="baseline">未知</strong></div><div><span>最後更新</span><strong id="updated">尚無資料</strong></div></div>
+</section>
+
+<section class="thresholds" aria-label="判定門檻"><div><span class="dot normal"></span><strong>正常</strong><span>變化 &lt; 4°</span></div><div><span class="dot warning"></span><strong>超標確認中</strong><span>變化 ≥ 4°，未滿 800 ms</span></div><div><span class="dot alarm"></span><strong>鬆脫警報</strong><span>變化 ≥ 4°，持續 800 ms</span></div></section>
+
+<div class="lower-grid">
+<section class="card alert-settings" aria-labelledby="alert-settings-title"><div class="section-head"><h2 id="alert-settings-title">本頁提醒與 Wi-Fi 本機頁</h2><span class="pill">需保持連線</span></div><p>網頁收到任一感知器的鬆脫警報時顯示橫幅並可發聲提醒。也可連上 ESP32 熱點開啟 <a href="http://192.168.4.1/" referrerpolicy="no-referrer">http://192.168.4.1/</a>。</p><div class="alert-options"><div><button id="soundToggle" class="secondary" aria-pressed="false">啟用提示音</button><p id="soundStatus">未啟用</p></div><div><button id="notificationToggle" class="secondary" aria-pressed="false">啟用系統通知</button><p id="notificationStatus">未啟用</p></div><div><button id="testAlerts" class="secondary">測試本頁提醒</button><p>只測本頁橫幅與聲音。</p></div></div><p id="alertTestResult" class="operation-feedback" role="status" aria-live="polite"></p></section>
+
+<section class="card" id="events-section" aria-labelledby="events-title"><div class="section-head"><h2 id="events-title">最近事件</h2><span id="eventCount" class="pill">0 筆</span></div><div class="event-tools"><label for="eventFilter">事件類型</label><select id="eventFilter"><option value="all">全部事件</option><option value="connection">連線</option><option value="calibration">校正</option><option value="alarm">警示</option><option value="sensor">感測異常</option><option value="status">狀態</option><option value="notification">本頁提醒</option><option value="system">系統</option></select><button id="exportEvents" class="secondary" disabled>匯出 CSV</button><button id="clearEvents" class="text-button" disabled>清除全部</button></div><p id="eventFeedback" class="operation-feedback" role="status" aria-live="polite"></p><ul id="events" class="events"><li>尚無事件</li></ul></section>
+</div>
+</main>
+<dialog id="clearDialog" aria-labelledby="clear-title"><h2 id="clear-title">清除全部事件紀錄？</h2><p>只清除此瀏覽器的全部分類，無法復原；不影響 ESP32。</p><div class="dialog-actions"><button id="cancelClear" class="secondary">保留紀錄</button><button id="confirmClear">確認清除</button></div></dialog>
+<footer>貨物鬆脫警示器 v3.0 · 雙感知器藍牙即時監測與貨車配置模型</footer>
+<script type="module" src="app.mjs"></script>
+</body></html>

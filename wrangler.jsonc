@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cargoalert-dual-monitor",
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-01-01",
+  "triggers": {
+    "crons": ["* * * * *"]
+  },
+  "vars": {
+    "STALE_SECONDS": "60"
+  }
+  // 在 Cloudflare Dashboard 連結 GitHub 倉庫部署時，綁定一個名為 DB 的 D1 資料庫，
+  // 並設定環境變數 CARGO_DEVICES_JSON（裝置設定與金鑰雜湊），即可獲得永久免費公開 HTTPS 全端網址！
+}

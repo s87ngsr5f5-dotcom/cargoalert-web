@@ -1,0 +1,32 @@
+// Explicit test device only. Never writes production-device data or calls LINE.
+import {readFileSync} from 'node:fs';
+import {randomUUID} from 'node:crypto';
+import assert from 'node:assert/strict';
+const at=process.argv.indexOf('--base');
+const base=at<0?'http://127.0.0.1:8765':process.argv[at+1];
+if(!['http://127.0.0.1:8765','https://cargoalert-arm-monitor.alondragallard.chatgpt.site'].includes(base))throw Error('Unsupported test destination');
+const keys=JSON.parse(readFileSync('.private/device-credentials.json','utf8')).find(x=>x.id==='cargoalert-lab');
+if(!keys)throw Error('Run backend/provision.mjs first');
+const root=base+'/api/v1/devices/cargoalert-lab/';
+async function call(action,p){const r=await fetch(root+action,{method:p?'POST':'GET',headers:{Authorization:'Bearer '+(p?keys.uploadToken:keys.viewToken),'Content-Type':'application/json'},...(p?{body:JSON.stringify(p)}:{})});if(!r.ok)throw Error('API '+action+' HTTP '+r.status);return action==='events.csv'?r.text():r.json();}
+const boot=randomUUID().replaceAll('-','');
+const session=await call('session',{bootId:boot,firmware:'SIMULATED-cli-test'});
+const sample=(uptimeMs,state='normal')=>({uptimeMs,state,valid:state!=='sensor_error',calibrated:state!=='uncalibrated',fault:state==='sensor_error'?2:0,delta:state==='sensor_error'||state==='uncalibrated'?null:state==='alarm'?7.5:2.4});
+const wan={state:'connected',lastError:'none',sim:'ready',transport:'4G',registration:1,signalQuality:18,retries:0,uartResponding:true,simReady:true,hasIp:true};
+const line={phase:'waiting',http:0,attempts:0,transportError:0,tlsError:0,tlsFlags:0,socketError:0,configured:true,networkReady:true,clockReady:true,pending:false};
+const report=(seq,s,events=[])=>({v:1,deviceId:'cargoalert-lab',simulation:true,firmware:'SIMULATED-cli-test',bootId:boot,sessionGeneration:session.generation,seq,sentUptimeMs:s.uptimeMs,sample:s,wan,line,events,stats:{uploaded:seq-1,failed:0,reconnects:0,dropped:0}});
+await call('reports',report(1,sample(1000)));
+assert.equal((await call('status')).displayState,'normal');
+const alarm={bootId:boot,seq:1,type:'alarm',uptimeMs:2000,epochMs:null,sample:sample(2000,'alarm')};
+const p=report(2,alarm.sample,[alarm]);await call('reports',p);await call('reports',p);
+await new Promise(r=>setTimeout(r,1000));
+let events=(await call('events')).events.filter(e=>e.boot_id===boot);
+assert.equal(events.length,1);assert.equal(events[0].line_state,'simulation_skipped');
+await call('reports',report(3,sample(3000,'sensor_error')));assert.equal((await call('status')).displayState,'sensor_error');
+await call('reports',report(4,sample(4000,'uncalibrated')));assert.equal((await call('status')).displayState,'uncalibrated');
+const delayed={bootId:boot,seq:2,type:'sensor_fault',uptimeMs:5000,epochMs:null,sample:sample(5000,'sensor_error')};
+await call('reports',report(5,sample(180000),[delayed]));
+events=(await call('events')).events.filter(e=>e.boot_id===boot);
+assert.equal(events.find(e=>e.seq===2).historical,1);assert.match(await call('events.csv'),/sensor_fault/);
+const metrics=await call('metrics');
+console.log(JSON.stringify({testDevice:'cargoalert-lab',simulation:true,base,checksPassed:8,hardwareTested:false,realLineSent:false,metrics},null,2));

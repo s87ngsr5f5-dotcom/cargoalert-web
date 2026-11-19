@@ -1,0 +1,286 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#24466b"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'"><title>CargoAlert v3.0｜雙感知器 4G 遠端監測與貨車配置模型</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="design.css"><link rel="stylesheet" href="experience.css"><link rel="stylesheet" href="palette.css"><link rel="stylesheet" href="remote-control.css"><link rel="stylesheet" href="remote.css"><link rel="stylesheet" href="v3-theme.css"></head><body>
+<header><div class="brand"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M11 7H7v18h18v-4M13 5h14v14H13z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="m18 10 4 4-4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>貨物鬆脫警示器</strong><small>CargoAlert v3.1 · 雙感知器 4G 雲端監測</small></div></div><nav aria-label="主要導覽"><a href="./">藍牙雙感知器</a><a class="nav-active" href="./remote.html">4G 遠端監測</a><a href="#cargoModelSection">貨車配置模型</a><a href="#history">歷史事件</a><button id="themeToggle" type="button" class="theme-toggle-btn" aria-pressed="false">☀️ 淺色模式</button></nav></header><main>
+<div class="intro"><div><p class="eyebrow">CARGOALERT v3.0 / DUAL-SENSOR REMOTE MONITOR</p><h1>雙感知器遠端監測<span class="title-dot">.</span></h1><p>單一 ESP32 同步監測一號與二號 AS5600；透過貨車／貨物配置模型即時標示哪個位置的束帶鬆脫。</p></div><span class="prototype">v3.0 雙感知器 · 4° 警報版</span></div>
+
+<section class="card remote-login"><h2>開啟你的裝置</h2><p>輸入裝置識別碼與專屬查看金鑰。查看金鑰暫存在此分頁，重新整理會自動恢復；若目前只是展示介面與貨車配置模型，也可直接點「開啟展示模擬模式」。</p>
+<form id="remoteLogin">
+<label for="remoteId">裝置識別碼<input id="remoteId" required maxlength="48" placeholder="cargoalert-01" autocomplete="off"></label>
+<label for="remoteKey">查看金鑰
+<div class="key-input-wrap">
+<input id="remoteKey" type="password" required minlength="32" maxlength="128" autocomplete="off">
+<button type="button" id="toggleViewKey" class="key-toggle" aria-label="顯示查看金鑰">👁</button>
+</div>
+</label>
+<div class="remote-actions">
+<button type="submit">讀取雲端狀態</button>
+<button id="remoteLogout" type="button" class="secondary" disabled>清除查看金鑰</button>
+<button id="toggleDemoMode" type="button" class="secondary" aria-pressed="false">🎮 開啟展示模擬模式</button>
+</div>
+</form>
+<p id="remoteMessage" role="status" aria-live="polite">尚未讀取裝置。可輸入金鑰讀取 4G 雲端資料，或點「開啟展示模擬模式」體驗貨車配置與雙感知器聯動。</p>
+</section>
+
+<!-- Interactive Demo Controls (for presentation / testing without 4G) -->
+<section id="demoPanel" class="card demo-panel" hidden>
+<div class="section-head">
+<h2>🎮 專題展示模擬控制台（本機畫面測試，不發送真實 LINE）</h2>
+<span class="pill demo-pill">模擬模式運作中</span>
+</div>
+<div class="demo-grid">
+<div class="demo-sensor-ctrl">
+<label for="demoSlider1"><strong>一號感知器角度：</strong><span id="demoVal1">+0.8°</span>
+<input id="demoSlider1" type="range" min="-20" max="20" step="0.5" value="0.8">
+</label>
+</div>
+<div class="demo-sensor-ctrl">
+<label for="demoSlider2"><strong>二號感知器角度：</strong><span id="demoVal2">-0.4°</span>
+<input id="demoSlider2" type="range" min="-20" max="20" step="0.5" value="-0.4">
+</label>
+</div>
+</div>
+<div class="demo-buttons">
+<button type="button" class="secondary" data-demo="normal">✅ 全部正常</button>
+<button type="button" class="secondary" data-demo="alarm1">⚠️ 模擬一號鬆脫 (+8.5°)</button>
+<button type="button" class="secondary" data-demo="alarm2">⚠️ 模擬二號鬆脫 (-9.2°)</button>
+<button type="button" class="secondary" data-demo="alarmBoth">🚨 模擬一號與二號同時鬆脫</button>
+<button type="button" class="secondary" data-demo="fault2">🔧 模擬二號磁鐵異常</button>
+</div>
+</section>
+
+<!-- Remote Alarm Banner -->
+<section id="remoteAlarmBanner" class="alarm-banner" role="alert" aria-live="assertive" aria-atomic="true" hidden>
+<div><strong id="remoteAlarmTitle">⚠️ 貨物鬆脫警報！</strong><p id="remoteAlarmText">裝置回報擺臂超標角度變化，請立即確認固定束帶！</p></div>
+<div class="alarm-banner-actions">
+<button id="remoteAckAlarm" type="button" class="secondary">知道了／停止聲音</button>
+</div>
+</section>
+
+<div id="simulationBadge" class="notice simulation" hidden>測試／模擬模式：以下為模擬資料，不能列為實車測試成果。不會發送真實 LINE。</div>
+
+<!-- Interactive Truck / Cargo Sensor Placement Model -->
+<section id="cargoModelSection" class="card cargo-model-card" aria-labelledby="cargo-model-title">
+<div class="section-head">
+<h2 id="cargo-model-title">貨車與貨物感知器配置模型</h2>
+<div class="model-view-switch" role="group" aria-label="模型視角切換">
+<button id="viewTruck" type="button" class="seg-btn" aria-pressed="true">貨車貨斗俯視圖</button>
+<button id="viewCargo" type="button" class="seg-btn" aria-pressed="false">立體貨物模型</button>
+</div>
+</div>
+<p class="footnote">選擇要擺放的感知器編號後，直接點擊模型上的「＋」位置即可設定安裝點（點到另一顆感知器會自動對調）；發生鬆脫警報時，模型與頂部橫幅會同步高亮精確位置。</p>
+
+<div class="model-layout">
+<div class="model-stage">
+<div class="model-picker-bar" role="group" aria-label="選擇要擺放的感知器">
+<button id="pickSensor1" type="button" class="picker-btn picker-s1" aria-pressed="true"><span class="picker-dot s1"></span>放置一號感知器 (#1)</button>
+<button id="pickSensor2" type="button" class="picker-btn picker-s2" aria-pressed="false"><span class="picker-dot s2"></span>放置二號感知器 (#2)</button>
+</div>
+<div id="cargoModelCanvas" class="cargo-model-canvas"></div>
+<p id="modelPlacementHint" class="footnote model-hint">直接點擊模型上的錨點擺放感知器。</p>
+</div>
+
+<aside class="model-sidebar">
+<h3>感知器位置設定</h3>
+<div class="placement-card placement-s1">
+<div class="placement-head"><span class="sensor-chip s1">一號感知器 #1</span><small>Wire · GPIO21/22</small></div>
+<label for="slotSelect1">安裝位置
+<select id="slotSelect1"></select>
+</label>
+<label for="noteInput1">位置備註（選填）
+<input id="noteInput1" type="text" maxlength="24" placeholder="例如：前左主束帶">
+</label>
+</div>
+
+<div class="placement-card placement-s2">
+<div class="placement-head"><span class="sensor-chip s2">二號感知器 #2</span><small>Wire1 · GPIO25/26</small></div>
+<label for="slotSelect2">安裝位置
+<select id="slotSelect2"></select>
+</label>
+<label for="noteInput2">位置備註（選填）
+<input id="noteInput2" type="text" maxlength="24" placeholder="例如：後右尾門束帶">
+</label>
+</div>
+
+<div class="preset-box">
+<span class="preset-title">常用貨車綁法快選</span>
+<div class="preset-btns">
+<button type="button" class="secondary preset-btn" data-preset="diagonal">對角固定</button>
+<button type="button" class="secondary preset-btn" data-preset="front">前側雙綁</button>
+<button type="button" class="secondary preset-btn" data-preset="left">左側雙綁</button>
+<button type="button" class="secondary preset-btn" data-preset="center">前後軸向</button>
+</div>
+</div>
+<p class="footnote">配置會自動儲存於本機瀏覽器，重開網頁自動恢復。</p>
+</aside>
+</div>
+</section>
+
+<!-- Dual-Sensor Real-Time Status & Gauges -->
+<section class="card remote-monitor"><div class="section-head"><h2 id="remoteName">雙感知器即時監測</h2>
+<div class="head-badges">
+<button id="remoteSoundToggle" type="button" class="sound-toggle-btn secondary" aria-pressed="false" title="開啟遠端警報提示音">🔔 提示音：關</button>
+<span id="remoteFresh" class="pill">尚無資料</span>
+</div>
+</div>
+<div id="remoteState" class="state" data-state="offline">尚未載入</div>
+<p id="remoteDetail">本機感測與蜂鳴器不依賴此頁持續開啟。</p>
+
+<div class="dual-gauge-grid">
+<!-- Sensor 1 Card -->
+<article id="sensorCard1" class="sensor-gauge-card" data-state="offline">
+<div class="sensor-card-head">
+<div>
+<span class="sensor-chip s1">一號感知器 #1</span>
+<span id="sensorLocBadge1" class="loc-badge">前左側</span>
+</div>
+<span id="sensorState1" class="sensor-state-pill" data-state="offline">尚未載入</span>
+</div>
+<div class="sensor-reading-row">
+<div class="sensor-metric">
+<span>相對基準角度</span>
+<strong id="sensorAngle1">—</strong>
+<small id="angleGaugeStatus1">等待有效的已校正角度資料</small>
+</div>
+<svg id="remoteAngleGauge1" class="mini-angle-gauge" viewBox="0 0 240 156" role="img" aria-label="一號感知器角度儀表" data-state="offline">
+<path class="gauge-track" d="M29 122 A91 91 0 0 1 211 122"/>
+<path class="gauge-alarm" d="M29 122 A91 91 0 0 1 101.1 33.0 M138.9 33.0 A91 91 0 0 1 211 122"/>
+<path class="gauge-normal" d="M101.1 33.0 A91 91 0 0 1 138.9 33.0"/>
+<path class="gauge-guide-line" d="M120 122 L120 25"/>
+<path class="gauge-threshold-line" d="M120 122 L101.1 33.0 M120 122 L138.9 33.0"/>
+<g class="gauge-ticks"><text x="24" y="142">−30°</text><text x="90" y="21" class="tick-alarm">−4°</text><text x="120" y="14" class="tick-base">0°</text><text x="150" y="21" class="tick-alarm">+4°</text><text x="216" y="142">+30°</text></g>
+<g id="angleNeedle1" class="gauge-needle" transform="rotate(0 120 122)"><line x1="120" y1="122" x2="120" y2="42"/><circle cx="120" cy="122" r="7"/></g>
+<text x="120" y="150" class="gauge-live-value" id="angleGaugeValue1" text-anchor="middle">—</text>
+</svg>
+</div>
+<div class="risk-meter"><div class="risk-meter-head"><span>4° 警報門檻安全餘裕</span><span id="remoteRiskText1">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="remoteRiskFill1" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
+</article>
+
+<!-- Sensor 2 Card -->
+<article id="sensorCard2" class="sensor-gauge-card" data-state="offline">
+<div class="sensor-card-head">
+<div>
+<span class="sensor-chip s2">二號感知器 #2</span>
+<span id="sensorLocBadge2" class="loc-badge">後右側</span>
+</div>
+<span id="sensorState2" class="sensor-state-pill" data-state="offline">尚未載入</span>
+</div>
+<div class="sensor-reading-row">
+<div class="sensor-metric">
+<span>相對基準角度</span>
+<strong id="sensorAngle2">—</strong>
+<small id="angleGaugeStatus2">等待有效的已校正角度資料</small>
+</div>
+<svg id="remoteAngleGauge2" class="mini-angle-gauge" viewBox="0 0 240 156" role="img" aria-label="二號感知器角度儀表" data-state="offline">
+<path class="gauge-track" d="M29 122 A91 91 0 0 1 211 122"/>
+<path class="gauge-alarm" d="M29 122 A91 91 0 0 1 101.1 33.0 M138.9 33.0 A91 91 0 0 1 211 122"/>
+<path class="gauge-normal" d="M101.1 33.0 A91 91 0 0 1 138.9 33.0"/>
+<path class="gauge-guide-line" d="M120 122 L120 25"/>
+<path class="gauge-threshold-line" d="M120 122 L101.1 33.0 M120 122 L138.9 33.0"/>
+<g class="gauge-ticks"><text x="24" y="142">−30°</text><text x="90" y="21" class="tick-alarm">−4°</text><text x="120" y="14" class="tick-base">0°</text><text x="150" y="21" class="tick-alarm">+4°</text><text x="216" y="142">+30°</text></g>
+<g id="angleNeedle2" class="gauge-needle" transform="rotate(0 120 122)"><line x1="120" y1="122" x2="120" y2="42"/><circle cx="120" cy="122" r="7"/></g>
+<text x="120" y="150" class="gauge-live-value" id="angleGaugeValue2" text-anchor="middle">—</text>
+</svg>
+</div>
+<div class="risk-meter"><div class="risk-meter-head"><span>4° 警報門檻安全餘裕</span><span id="remoteRiskText2">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="remoteRiskFill2" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
+</article>
+</div>
+
+<div class="remote-recal-box" aria-labelledby="recal-title">
+<div class="recal-head">
+<div>
+<h3 id="recal-title">🎯 遠端重設基準值（校正歸零）</h3>
+<p class="footnote">將目前拉緊的角度設為新的 0° 基準並存入 ESP32 的 NVS（斷電保存）。請務必確認實體束帶已拉緊後再執行。</p>
+</div>
+<label class="recal-target-label" for="recalTarget">重設對象
+<select id="recalTarget">
+<option value="all">同時重設一號與二號（預設）</option>
+<option value="1">僅重設一號感知器</option>
+<option value="2">僅重設二號感知器</option>
+</select>
+</label>
+</div>
+<div class="recal-controls">
+<label class="recal-check"><input id="recalConfirmCheck" type="checkbox">已確認束帶皆已拉緊，搖臂位於正常固定位置</label>
+<button id="remoteRecalBtn" type="button" disabled>重設基準值</button>
+</div>
+<p id="recalStatus" class="recal-status" role="status" aria-live="polite">先讀取裝置狀態（或開啟展示模擬模式），再勾選確認即可重設基準值。</p>
+</div>
+
+<div class="remote-values">
+<div><span>最高風險偏移角度</span><strong id="remoteAngle">—</strong></div>
+<div><span>資料收到時間</span><strong id="remoteReceived">—</strong></div>
+<div><span>裝置事件時間</span><strong id="remoteUptime">—</strong></div>
+<div><span>韌體／校正／連線</span><strong id="remoteFirmware">—</strong></div>
+</div>
+<p class="footnote">雲端角度是裝置最近一次有效回報；超過 60 秒未收到新回報會標示過期。門檻：任一感知器 |角度| ≥ 4° 且連續 800 ms 確認鬆脫警報。</p></section>
+
+<section class="card remote-connectivity" aria-labelledby="remote-connectivity-title"><div class="section-head"><h2 id="remote-connectivity-title">4G 與 LINE 連線診斷</h2><span id="remoteDiagFreshness" class="pill">尚無裝置診斷</span></div><p class="footnote">以下是 ESP32 隨雲端資料送來的最後一份狀態，不是網站直接讀取 4G 模組。裝置無法上網時，雲端不可能取得更新中的故障原因；請先看最後回報時間與最後已知階段。</p><div class="diag-grid"><section class="diag-panel"><h3>行動網路／A7670C</h3><strong id="remoteWanState" class="diag-state" data-state="unknown">尚無資料</strong><p id="remoteWanAdvice">等待裝置回報。</p><dl><div><dt>使用路徑</dt><dd id="remoteWanTransport">—</dd></div><div><dt>SIM</dt><dd id="remoteSimState">—</dd></div><div><dt>電信註冊</dt><dd id="remoteRegistration">—</dd></div><div><dt>PPP IP</dt><dd id="remoteWanIp">—</dd></div><div><dt>UART / SIM 實測</dt><dd id="remoteUartSim">—</dd></div><div><dt>訊號值</dt><dd id="remoteSignal">—</dd></div><div><dt>重試</dt><dd id="remoteWanRetries">—</dd></div></dl></section><section class="diag-panel"><h3>LINE Messaging API</h3><strong id="remoteLinePhase" class="diag-state" data-state="unknown">尚無資料</strong><p id="remoteLineAdvice">等待裝置回報。</p><dl><div><dt>最後 HTTP</dt><dd id="remoteLineHttp">—</dd></div><div><dt>ESP-TLS 錯誤碼</dt><dd id="remoteLineTls">—</dd></div><div><dt>Socket 錯誤碼</dt><dd id="remoteLineSocket">—</dd></div><div><dt>傳輸錯誤碼</dt><dd id="remoteLineTransportError">—</dd></div><div><dt>傳送嘗試</dt><dd id="remoteLineAttempts">—</dd></div><div><dt>Token／設定檢查</dt><dd id="remoteLineConfigured">—</dd></div><div><dt>網路／校時</dt><dd id="remoteLineReady">—</dd></div><div><dt>待送事件</dt><dd id="remoteLinePending">—</dd></div></dl><small>「LINE API 已接受」不保證手機已收到；LINE 警報會註明是【一號感知器】或【二號感知器】。</small></section></div></section>
+
+<section class="card remote-line-control" aria-labelledby="remote-control-title">
+<div class="section-head"><h2 id="remote-control-title">4G 通知測試</h2><span id="remoteControlModePill" class="pill">實際發送</span></div>
+<p>此功能若啟用，網站命令由 ESP32 經 4G 取得並確認，再交由後端發送 LINE。裝置直發 LINE 的設定下，按鈕會停用；本頁的 4G 診斷卡會說明最後回報路徑與狀態。</p>
+<p class="footnote">需要韌體支援雲端命令及獨立控制金鑰。命令 2 分鐘到期、每次至少間隔 60 秒；收件人由後端綁定，這裡不填電話或 LINE Token。不更動校正或蜂鳴器設定。</p>
+<label for="remoteControlKey">裝置控制金鑰
+<div class="key-input-wrap">
+<input id="remoteControlKey" type="password" autocomplete="off" minlength="32" maxlength="128" placeholder="與查看金鑰不同；只用於這次操作">
+<button type="button" id="toggleControlKey" class="key-toggle" aria-label="顯示控制金鑰">👁</button>
+</div>
+</label>
+<div class="remote-actions"><button id="remoteLineTest" type="button" disabled>透過 4G 發送 LINE 測試</button></div>
+<p id="remoteControlHint" class="footnote">先讀取裝置狀態。</p><p id="remoteControlMessage" role="status" aria-live="polite">尚未發送命令。</p>
+<div id="remoteCommands" class="remote-command-list" aria-label="最近通知命令"></div></section>
+<dialog id="lineTestDialog" aria-labelledby="line-test-title"><h2 id="line-test-title">發送一則 LINE 測試？</h2><p>會讓已連網的 ESP32 經 4G 確認命令，再由後端通知已綁定的 LINE 收件人，可能使用訊息額度。API 接受不代表手機已收到。</p><div class="dialog-actions"><button id="cancelLineTest" type="button" class="secondary">取消</button><button id="confirmLineTest" type="button">確認發送一次</button></div></dialog>
+
+<div class="lower-grid"><section class="card"><h2>LINE 警報處理</h2><p id="remoteLine">尚無雲端處理結果</p><p class="footnote">LINE 可依裝置設定由 ESP32 或後端傳送；一號與二號感知器各有獨立冷卻與排隊槽位，同時鬆脫不會互相覆蓋。遠端重設基準值命令由 ESP32 經 4G 取得並於本機驗證有效讀值後寫入 NVS。</p><p id="remoteMetrics" class="footnote">尚無統計</p></section>
+
+<section class="card">
+<div class="section-head">
+<h2>雙感知器角度趨勢</h2>
+<div class="trend-stats"><span id="trendPeak" class="trend-peak-pill">峰值: —</span></div>
+</div>
+<div class="trend-legend">
+<span><i class="trend-swatch s1"></i>一號感知器</span>
+<span><i class="trend-swatch s2"></i>二號感知器</span>
+</div>
+<svg id="remoteTrend" viewBox="0 0 600 170" role="img" aria-label="尚無角度趨勢"></svg>
+<p id="trendNote" class="footnote">最多顯示最近 240 次回報；含 0° 基準及 ±4° 警報門檻。</p>
+</section>
+</div>
+
+<section class="card" id="history">
+<div class="section-head">
+<h2>歷史事件（含感知器編號與配置位置）</h2>
+<div class="history-controls">
+<label for="remoteSensorFilter" class="filter-label">感知器
+<select id="remoteSensorFilter">
+<option value="all">全部感知器</option>
+<option value="1">一號感知器</option>
+<option value="2">二號感知器</option>
+</select>
+</label>
+<label for="remoteEventFilter" class="filter-label">類型
+<select id="remoteEventFilter">
+<option value="all">全部事件</option>
+<option value="alarm">鬆脫警報</option>
+<option value="sensor">感測異常／恢復</option>
+<option value="cal">校正／清除基準</option>
+<option value="state">狀態變化</option>
+<option value="test">通知測試</option>
+<option value="boot">開機紀錄</option>
+</select>
+</label>
+<span id="remoteEventCount" class="pill">0 筆</span>
+<button id="remoteCsv" class="secondary" disabled>匯出事件 CSV</button>
+</div>
+</div>
+<p class="footnote">列出最近 100 筆；CSV 最多 1,000 筆並含 sensor_id 與 sensor_name 欄位。補傳資料標示為歷史事件，不能當成目前狀態。</p>
+<div class="table-wrap">
+<table><thead><tr><th>事件／感知器／發生時間</th><th>事發角度與狀態</th><th>雲端收到時間</th><th>LINE 推播狀態</th></tr></thead>
+<tbody id="remoteEvents"><tr><td colspan="4">尚無事件</td></tr></tbody>
+</table>
+</div>
+</section>
+
+<section class="card"><h2>連接方式的差別</h2><p><b>在裝置旁：</b>使用藍牙或 Wi-Fi 本機頁面（<code>http://192.168.4.1/</code>）查看一號／二號角度與單鍵雙重設基準。</p><p><b>在遠處：</b>本頁讀取後端紀錄；裝置須先完成 4G／HTTPS 回報設定，並搭配上方貨車配置模型快速定位鬆脫束帶。</p></section>
+</main><footer>貨物固定束帶鬆脫警示器 v3.0 · 雙感知器雲端監測與貨車配置模型</footer>
+<script type="module" src="remote.mjs"></script>
+</body></html>
