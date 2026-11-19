@@ -4,13 +4,13 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#24466b"><meta name="description" content="透過 BLE 連接 CargoAlert 雙感知器（一號／二號 AS5600），搭配互動式貨車配置模型即時監測搖臂角度與一鍵重設基準值。">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'">
-<title>貨物鬆脫警示器 v3.5｜雙感知器藍牙監測與貨車模型</title>
-<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="design.css"><link rel="stylesheet" href="clarity.css"><link rel="stylesheet" href="experience.css"><link rel="stylesheet" href="connection-methods.css"><link rel="stylesheet" href="palette.css"><link rel="stylesheet" href="remote.css"><link rel="stylesheet" href="v3-theme.css?v=3.5">
+<title>貨物鬆脫警示器 v3.6｜雙感知器藍牙監測與貨車模型</title>
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="design.css"><link rel="stylesheet" href="clarity.css"><link rel="stylesheet" href="experience.css"><link rel="stylesheet" href="connection-methods.css"><link rel="stylesheet" href="palette.css"><link rel="stylesheet" href="remote.css"><link rel="stylesheet" href="v3-theme.css?v=3.6">
 </head>
 <body>
-<header><div class="brand"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M11 7H7v18h18v-4M13 5h14v14H13z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="m18 10 4 4-4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>貨物鬆脫警示器</strong><small>CargoAlert v3.5 · 雙感知器即時監測</small></div></div><nav aria-label="主要導覽"><a class="nav-active" href="#monitor">藍牙雙感知器</a><a href="#cargoModelSection">貨車配置模型</a><a href="remote.html">4G 遠端監測</a><a href="#events-section">事件紀錄</a><button id="themeToggle" type="button" class="theme-toggle-btn" aria-pressed="false">☀️ 淺色模式</button></nav></header>
+<header><div class="brand"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M11 7H7v18h18v-4M13 5h14v14H13z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="m18 10 4 4-4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>貨物鬆脫警示器</strong><small>CargoAlert v3.6 · 雙感知器即時監測</small></div></div><nav aria-label="主要導覽"><a class="nav-active" href="#monitor">藍牙雙感知器</a><a href="#cargoModelSection">貨車配置模型</a><a href="remote.html">4G 遠端監測</a><a href="#events-section">事件紀錄</a><button id="themeToggle" type="button" class="theme-toggle-btn" aria-pressed="false">☀️ 淺色模式</button></nav></header>
 <main>
-<div class="intro"><div><p class="eyebrow">CARGOALERT v3.5 / DUAL-AS5600 WORKBENCH</p><h1>雙感知器即時監測<span class="title-dot">.</span></h1><p>單一 ESP32 同時監測一號與二號 AS5600；拖曳或點擊貨車模型擺放位置，4° 即時警報並可直接在網站重設基準值。</p></div><div class="intro-aside"><span class="prototype">v3.5 雙感知器 · 4° 警報版</span><span>藍牙／Wi-Fi · 近距離操作</span></div></div>
+<div class="intro"><div><p class="eyebrow">CARGOALERT v3.6 / DUAL-AS5600 SMART COCKPIT</p><h1>雙感知器即時監測<span class="title-dot">.</span></h1><p>單一 ESP32 同時監測一號與二號 AS5600；具防震動濾波路況模式、中文語音播報、出車前安檢與 LINE 綁定位置同步。</p></div><div class="intro-aside"><span class="prototype">v3.6 智慧防震 · 語音安檢版</span><span>藍牙／Wi-Fi · 近距離操作</span></div></div>
 
 <section id="connection" class="connection" aria-labelledby="connect-title"><div><h2 id="connect-title"><span class="connection-dot" aria-hidden="true"></span>藍牙連線（同時讀取一號與二號感知器）</h2><p><span id="connectionText">尚未連接</span> · <span id="deviceName">CargoAlert</span></p></div><div class="actions"><button id="connect">連接裝置</button><button id="disconnect" class="secondary" disabled>中斷連線</button><button id="bleDemoToggle" type="button" class="secondary" aria-pressed="false">🎮 展示模擬</button></div><p id="compatibility" class="notice" role="status"></p></section>
 <section id="bleDemoPanel" class="card demo-panel" hidden>
@@ -30,6 +30,38 @@
 
 <div id="message" class="message" role="status" aria-live="polite">先開啟 ESP32 電源，再按「連接裝置」選擇 CargoAlert 即可一次查看一號與二號感知器。</div>
 <section id="alarmBanner" class="alarm-banner" role="alert" aria-live="assertive" aria-atomic="true" hidden><div><strong id="alarmTitle">⚠️ 鬆脫警報</strong><p id="alarmText"></p></div><button id="ackAlarm" class="secondary">知道了／停止聲音</button></section>
+
+<!-- Pre-Trip Safety Check & Road Anti-Vibration Mode -->
+<div class="smart-grid">
+<section class="pretrip-card" aria-labelledby="pretrip-title">
+<div class="section-head">
+<h2 id="pretrip-title">📋 出車前安檢（Pre-Trip Check）</h2>
+<span id="preTripPill" class="pill pretrip-pill" data-ready="false">⏳ 待連線檢查</span>
+</div>
+<div class="pretrip-grid">
+<div id="ptS1" class="pretrip-item" data-ok="false"><strong>#1 一號感知器</strong><span id="ptS1Text">尚未連線</span></div>
+<div id="ptS2" class="pretrip-item" data-ok="false"><strong>#2 二號感知器</strong><span id="ptS2Text">尚未連線</span></div>
+<div id="ptCal" class="pretrip-item" data-ok="false"><strong>雙側歸零與固定</strong><span id="ptCalText">等待歸零檢查</span></div>
+<div id="ptAlert" class="pretrip-item" data-ok="false"><strong>聲音／語音警報</strong><span id="ptAlertText">尚未開啟提示音或語音</span></div>
+</div>
+<div class="pretrip-actions">
+<span id="ptSummary" class="footnote">完成四項檢查即可匯出出車安檢紀錄。</span>
+<button id="exportPreTrip" type="button" class="secondary">📄 匯出安檢紀錄</button>
+</div>
+</section>
+
+<section class="roadmode-card" aria-labelledby="roadmode-title">
+<div class="section-head">
+<h2 id="roadmode-title">🛣️ 防震動路況模式</h2>
+<span id="roadModeBadge" class="pill">4.0° / 800ms</span>
+</div>
+<div class="road-mode-switch" role="group" aria-label="路況防震模式切換">
+<button id="roadNormal" type="button" class="road-btn" aria-pressed="true"><strong>🛣️ 一般道路</strong><small>4.0° / 800 ms · 標準濾波</small></button>
+<button id="roadRough" type="button" class="road-btn" aria-pressed="false"><strong>⛰️ 顛簸山路</strong><small>5.0° / 1200 ms · 強化防震</small></button>
+</div>
+<p id="roadSyncNote" class="footnote">內建 EMA 低通濾波防止坑洞誤報；連上藍牙後切換會自動寫入 ESP32 斷電保存。</p>
+</section>
+</div>
 
 <!-- Interactive Truck / Cargo Sensor Placement Model -->
 <section id="cargoModelSection" class="card cargo-model-card" aria-labelledby="cargo-model-title">
@@ -93,13 +125,13 @@
 </div>
 <div class="sensor-reading-row">
 <div class="sensor-metric">
-<span>門檻 ±4°</span>
+<span id="bleMetricLimit1">門檻 ±4°</span>
 <strong id="bleAngle1">—</strong>
 <small id="bleStatusText1">GPIO21/22</small>
 </div>
 <svg id="bleGauge1" class="mini-angle-gauge" viewBox="0 0 340 212" role="img" aria-label="一號感知器儀表" data-state="offline"></svg>
 </div>
-<div class="risk-meter"><div class="risk-meter-head"><span>門檻 4°</span><span id="bleRiskText1">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="bleRiskFill1" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
+<div class="risk-meter"><div class="risk-meter-head"><span id="bleRiskLimit1">門檻 4°</span><span id="bleRiskText1">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="bleRiskFill1" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
 </article>
 
 <article id="bleCard2" class="sensor-gauge-card" data-state="offline">
@@ -109,13 +141,13 @@
 </div>
 <div class="sensor-reading-row">
 <div class="sensor-metric">
-<span>門檻 ±4°</span>
+<span id="bleMetricLimit2">門檻 ±4°</span>
 <strong id="bleAngle2">—</strong>
 <small id="bleStatusText2">GPIO25/26</small>
 </div>
 <svg id="bleGauge2" class="mini-angle-gauge" viewBox="0 0 340 212" role="img" aria-label="二號感知器儀表" data-state="offline"></svg>
 </div>
-<div class="risk-meter"><div class="risk-meter-head"><span>門檻 4°</span><span id="bleRiskText2">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="bleRiskFill2" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
+<div class="risk-meter"><div class="risk-meter-head"><span id="bleRiskLimit2">門檻 4°</span><span id="bleRiskText2">—</span></div><svg class="risk-svg" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect class="risk-bg" width="100" height="8" rx="4"/><rect id="bleRiskFill2" class="risk-bar" width="0" height="8" rx="4" data-level="ok"/></svg></div>
 </article>
 </div>
 
@@ -139,15 +171,15 @@
 <div class="meta"><div><span>基準狀態</span><strong id="baseline">未知</strong></div><div><span>最後更新</span><strong id="updated">尚無資料</strong></div></div>
 </section>
 
-<section class="thresholds" aria-label="判定門檻"><div><span class="dot normal"></span><strong>正常</strong><span>變化 &lt; 4°</span></div><div><span class="dot warning"></span><strong>超標確認中</strong><span>變化 ≥ 4°，未滿 800 ms</span></div><div><span class="dot alarm"></span><strong>鬆脫警報</strong><span>變化 ≥ 4°，持續 800 ms</span></div></section>
+<section class="thresholds" aria-label="判定門檻"><div><span class="dot normal"></span><strong>正常</strong><span id="thrNormalTxt">變化 &lt; 4°</span></div><div><span class="dot warning"></span><strong>超標確認中</strong><span id="thrWarnTxt">變化 ≥ 4°，未滿 800 ms</span></div><div><span class="dot alarm"></span><strong>鬆脫警報</strong><span id="thrAlarmTxt">變化 ≥ 4°，持續 800 ms</span></div></section>
 
 <div class="lower-grid">
-<section class="card alert-settings" aria-labelledby="alert-settings-title"><div class="section-head"><h2 id="alert-settings-title">本頁提醒與 Wi-Fi 本機頁</h2><span class="pill">需保持連線</span></div><p>網頁收到任一感知器的鬆脫警報時顯示橫幅並可發聲提醒。也可連上 ESP32 熱點開啟 <a href="http://192.168.4.1/" referrerpolicy="no-referrer">http://192.168.4.1/</a>。</p><div class="alert-options"><div><button id="soundToggle" class="secondary" aria-pressed="false">啟用提示音</button><p id="soundStatus">未啟用</p></div><div><button id="notificationToggle" class="secondary" aria-pressed="false">啟用系統通知</button><p id="notificationStatus">未啟用</p></div><div><button id="testAlerts" class="secondary">測試本頁提醒</button><p>只測本頁橫幅與聲音。</p></div></div><p id="alertTestResult" class="operation-feedback" role="status" aria-live="polite"></p></section>
+<section class="card alert-settings" aria-labelledby="alert-settings-title"><div class="section-head"><h2 id="alert-settings-title">本頁聲音、中文語音與 Wi-Fi 本機頁</h2><span class="pill">免看螢幕警報</span></div><p>網頁收到鬆脫警報時播放區分音（一號高單嗶／二號低雙嗶）並可中文語音播報鬆脫位置。斷網時可連 ESP32 熱點開 <a href="http://192.168.4.1/" referrerpolicy="no-referrer">http://192.168.4.1/</a>。</p><div class="alert-options"><div><button id="soundToggle" class="secondary" aria-pressed="false">啟用提示音</button><p id="soundStatus">未啟用</p></div><div><button id="voiceToggle" class="secondary" aria-pressed="false">啟用中文語音播報</button><p id="voiceStatus">未啟用</p></div><div><button id="notificationToggle" class="secondary" aria-pressed="false">啟用系統通知</button><p id="notificationStatus">未啟用</p></div><div><button id="testAlerts" class="secondary">測試本頁提醒</button><p>試聽兩種叫聲與中文語音。</p></div></div><p id="alertTestResult" class="operation-feedback" role="status" aria-live="polite"></p></section>
 
 <section class="card" id="events-section" aria-labelledby="events-title"><div class="section-head"><h2 id="events-title">最近事件</h2><span id="eventCount" class="pill">0 筆</span></div><div class="event-tools"><label for="eventFilter">事件類型</label><select id="eventFilter"><option value="all">全部事件</option><option value="connection">連線</option><option value="calibration">校正</option><option value="alarm">警示</option><option value="sensor">感測異常</option><option value="status">狀態</option><option value="notification">本頁提醒</option><option value="system">系統</option></select><button id="exportEvents" class="secondary" disabled>匯出 CSV</button><button id="clearEvents" class="text-button" disabled>清除全部</button></div><p id="eventFeedback" class="operation-feedback" role="status" aria-live="polite"></p><ul id="events" class="events"><li>尚無事件</li></ul></section>
 </div>
 </main>
 <dialog id="clearDialog" aria-labelledby="clear-title"><h2 id="clear-title">清除全部事件紀錄？</h2><p>只清除此瀏覽器的全部分類，無法復原；不影響 ESP32。</p><div class="dialog-actions"><button id="cancelClear" class="secondary">保留紀錄</button><button id="confirmClear">確認清除</button></div></dialog>
-<footer>貨物鬆脫警示器 v3.4 · 雙感知器藍牙即時監測與貨車配置模型</footer>
-<script type="module" src="app.mjs?v=3.5"></script>
+<footer>貨物鬆脫警示器 v3.6 · 雙感知器防震濾波、中文語音與出車安檢系統</footer>
+<script type="module" src="app.mjs?v=3.6"></script>
 </body></html>

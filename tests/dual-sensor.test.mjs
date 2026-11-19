@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { api, hashToken } from '../backend/api.mjs';
-import { scheduleAlarmTonePattern } from '../dist/alerts.mjs';
+import { scheduleAlarmTonePattern, buildAlarmVoiceText } from '../dist/alerts.mjs';
 
 function makeDb() {
   const raw = new DatabaseSync(':memory:');
@@ -139,4 +139,11 @@ test('scheduleAlarmTonePattern generates distinct frequencies and rhythms for Se
   assert.ok(s2.every(x => x.freq < 650));
   assert.notDeepEqual(s1.map(x => x.freq), s2.map(x => x.freq));
   assert.ok(both.some(x => x.freq > 900) && both.some(x => x.freq < 650));
+
+  const v1 = buildAlarmVoiceText(1, { loc1: '前左', angle1: 5.8 });
+  const v2 = buildAlarmVoiceText(2, { loc2: '後右', angle2: -6.4 });
+  const vBoth = buildAlarmVoiceText(3, { loc1: '前左', loc2: '後右' });
+  assert.ok(v1.includes('前左') && v1.includes('一號') && v1.includes('5.8'));
+  assert.ok(v2.includes('後右') && v2.includes('二號') && v2.includes('6.4'));
+  assert.ok(vBoth.includes('前左') && vBoth.includes('後右') && vBoth.includes('同時鬆脫'));
 });

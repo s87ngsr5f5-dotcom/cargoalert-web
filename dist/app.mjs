@@ -1,13 +1,19 @@
 import {connectionHelp} from './compatibility.mjs';
 import {UUID,STATES,FAULTS,parseStatus,parseReply,isFresh,pruneEvents} from './protocol.mjs';
-import {createAlerts} from './alerts.mjs?v=3.5';
+import {createAlerts} from './alerts.mjs?v=3.6';
 import {EVENT_TYPES,eventType,normalizeEvents,eventsCSV} from './experience.mjs';
-import {createCargoModel,initThemeToggle} from './cargo-model.mjs?v=3.5';
-import {buildDialGauge,setDialGauge} from './dial-gauge.mjs?v=3.5';
+import {createCargoModel,initThemeToggle} from './cargo-model.mjs?v=3.6';
+import {buildDialGauge,setDialGauge} from './dial-gauge.mjs?v=3.6';
+
+const ROAD_KEY = 'cargoalert.roadmode.v1';
+let roadMode = 0;
+try { roadMode = localStorage.getItem(ROAD_KEY) === '1' ? 1 : 0; } catch {}
+const alarmDegNow = () => roadMode === 1 ? 5 : 4;
+const alarmHoldNow = () => roadMode === 1 ? 1200 : 800;
 
 initThemeToggle('themeToggle');
-buildDialGauge(document.getElementById('bleGauge1'), 'bleDial1');
-buildDialGauge(document.getElementById('bleGauge2'), 'bleDial2');
+buildDialGauge(document.getElementById('bleGauge1'), 'bleDial1', alarmDegNow());
+buildDialGauge(document.getElementById('bleGauge2'), 'bleDial2', alarmDegNow());
 const $=id=>document.getElementById(id), decoder=new TextDecoder(), encoder=new TextEncoder();
 let device=null, statusChar=null, sensor1Char=null, sensor2Char=null, commandChar=null, replyChar=null;
 let connected=false, busy=false, control=false, dualSupported=false, demoMode=false;
@@ -18,11 +24,40 @@ const key='cargoalert.events.v1';
 try { const stored=JSON.parse(localStorage.getItem(key)||'[]'); events=normalizeEvents(stored,Date.now()); }
 catch { storageOK=false; }
 
+let locSyncTimer = null;
+async function sendBleSetting(text){
+  if(!connected || !control || !commandChar || pending) return false;
+  try {
+    const bytes = encoder.encode(text);
+    if(bytes.length > 48) return false;
+    if(commandChar.writeValueWithResponse) await commandChar.writeValueWithResponse(bytes);
+    else await commandChar.writeValue(bytes);
+    return true;
+  } catch { return false; }
+}
+function sanitizeBleLoc(text){
+  return String(text || '').replace(/["\\<>\r\n\t]/g, '').trim().slice(0, 8) || '未標記';
+}
+async function syncSettingsToEsp32(){
+  if(!connected || !control || !commandChar) return;
+  const okM = await sendBleSetting(`MODE,${roadMode}`);
+  const ok1 = await sendBleSetting(`LOC,1,${sanitizeBleLoc(cargoModel.formatLocation(1))}`);
+  const ok2 = await sendBleSetting(`LOC,2,${sanitizeBleLoc(cargoModel.formatLocation(2))}`);
+  const note = $('roadSyncNote');
+  if(note && okM && ok1 && ok2){
+    note.textContent = `✅ 已同步至 ESP32：${roadMode===1?'顛簸山路(5°/1200ms)':'一般道路(4°/800ms)'}、LINE 位置 #1=${sanitizeBleLoc(cargoModel.formatLocation(1))}／#2=${sanitizeBleLoc(cargoModel.formatLocation(2))}`;
+  }
+}
+
 const cargoModel = createCargoModel({
   containerId: 'cargoModelSection',
   onChange() {
     syncLocationBadges();
     update();
+    if(connected && control){
+      clearTimeout(locSyncTimer);
+      locSyncTimer = setTimeout(() => { void syncSettingsToEsp32(); }, 350);
+    }
   },
   onSelectSensor(id) {
     $('bleCard1')?.classList.toggle('is-highlighted', id === 1);
@@ -95,11 +130,12 @@ function renderBleSensor(idx, s, fresh){
 
   const setRisk = (deg, active) => {
     if(!riskFill || !riskText) return;
+    const lim = alarmDegNow();
     if(!active || deg === null){ riskFill.setAttribute('width', '0'); riskFill.dataset.level = 'ok'; riskText.textContent = '—'; return; }
-    const mag = Math.abs(deg), pct = Math.min(100, (mag / 4) * 100);
+    const mag = Math.abs(deg), pct = Math.min(100, (mag / lim) * 100);
     riskFill.setAttribute('width', pct.toFixed(1));
-    riskFill.dataset.level = mag >= 4 ? 'alarm' : mag >= 2.5 ? 'warn' : 'ok';
-    riskText.textContent = `${mag.toFixed(1)}° / 4°`;
+    riskFill.dataset.level = mag >= lim ? 'alarm' : mag >= lim * 0.625 ? 'warn' : 'ok';
+    riskText.textContent = `${mag.toFixed(1)}° / ${lim}°`;
   };
 
   if(!connected && !demoMode){
@@ -134,7 +170,48 @@ function renderBleSensor(idx, s, fresh){
     subEl.textContent = !fresh ? '無訊號' : s.fault ? (FAULTS[s.fault]||'感測異常') : '需重設基準';
     return;
   }
-  subEl.textContent = st==='alarm' ? '鬆脫警報' : st==='confirming' ? '確認中 (800ms)' : '正常';
+  subEl.textContent = st==='alarm' ? '鬆脫警報' : st==='confirming' ? `確認中 (${alarmHoldNow()}ms)` : '正常';
+}
+
+function renderRoadModeUi(){
+  const lim = alarmDegNow(), hold = alarmHoldNow();
+  $('roadNormal')?.setAttribute('aria-pressed', String(roadMode === 0));
+  $('roadRough')?.setAttribute('aria-pressed', String(roadMode === 1));
+  if($('roadModeBadge')) $('roadModeBadge').textContent = `${lim.toFixed(1)}° / ${hold}ms`;
+  if($('bleMetricLimit1')) $('bleMetricLimit1').textContent = `門檻 ±${lim}°`;
+  if($('bleMetricLimit2')) $('bleMetricLimit2').textContent = `門檻 ±${lim}°`;
+  if($('bleRiskLimit1')) $('bleRiskLimit1').textContent = `門檻 ${lim}°`;
+  if($('bleRiskLimit2')) $('bleRiskLimit2').textContent = `門檻 ${lim}°`;
+  if($('thrNormalTxt')) $('thrNormalTxt').textContent = `變化 < ${lim}°`;
+  if($('thrWarnTxt')) $('thrWarnTxt').textContent = `變化 ≥ ${lim}°，未滿 ${hold} ms`;
+  if($('thrAlarmTxt')) $('thrAlarmTxt').textContent = `變化 ≥ ${lim}°，持續 ${hold} ms`;
+}
+
+function renderPreTrip(s1, s2, fresh1, fresh2){
+  const ok1 = !!(fresh1 && s1 && s1.fault === 0);
+  const ok2 = !!(fresh2 && s2 && s2.fault === 0);
+  const calOk = !!(ok1 && ok2 && s1.calibrated && s2.calibrated && s1.state === 'N' && s2.state === 'N');
+  const alertOk = alerts.isAudioArmed();
+  const setItem = (boxId, txtId, ok, txt) => {
+    const b = $(boxId), t = $(txtId);
+    if(b) b.dataset.ok = String(ok);
+    if(t) t.textContent = txt;
+  };
+  setItem('ptS1', 'ptS1Text', ok1, ok1 ? `${cargoModel.formatLocation(1)} · 磁場正常` : !fresh1 ? '尚未連線／無資料' : FAULTS[s1?.fault] || '異常');
+  setItem('ptS2', 'ptS2Text', ok2, ok2 ? `${cargoModel.formatLocation(2)} · 磁場正常` : !fresh2 ? '尚未連線／無資料' : FAULTS[s2?.fault] || '異常');
+  setItem('ptCal', 'ptCalText', calOk, calOk ? `雙側已歸零（< ${alarmDegNow()}°）` : (ok1 || ok2) ? '尚有未歸零或偏移超標' : '等待感測資料');
+  setItem('ptAlert', 'ptAlertText', alertOk, alertOk ? '已開啟提示音或中文語音' : '建議開啟提示音或語音播報');
+  const ready = ok1 && ok2 && calOk;
+  const pill = $('preTripPill');
+  if(pill){
+    pill.dataset.ready = String(ready);
+    pill.textContent = ready ? (alertOk ? '✅ 全部通過｜可安全出車' : '✅ 感測通過｜可出車') : '⏳ 尚有項目待確認';
+  }
+  if($('ptSummary')){
+    $('ptSummary').textContent = ready
+      ? `安檢通過（${roadMode===1?'顛簸山路':'一般道路'} ${alarmDegNow()}°/${alarmHoldNow()}ms），可匯出紀錄。`
+      : '確認兩顆感知器磁場正常並完成歸零後，即顯示可安全出車。';
+  }
 }
 
 function update(){
@@ -151,8 +228,10 @@ function update(){
   $('connection').dataset.connected = String(isLive);
   $('disconnect').disabled = !connected && !busy;
 
+  renderRoadModeUi();
   renderBleSensor(0, sensors[0], fresh1);
   renderBleSensor(1, sensors[1], fresh2);
+  renderPreTrip(sensors[0], sensors[1], fresh1, fresh2);
 
   cargoModel.updateSensors([
     bleToModelSample(1, sensors[0], fresh1),
@@ -329,6 +408,7 @@ async function connect(){
     record(`已連接 ${device.name||'CargoAlert'}（${dualSupported?'雙感知器':'單感知器'}）。`, 'connection');
     message('');
     update();
+    if(control) void syncSettingsToEsp32();
   } catch(e){
     if(token!==session) return;
     const cancelled = e.name === 'NotFoundError';
@@ -394,13 +474,46 @@ function applyBleDemo(){
   const a1 = Number($('bleDemoS1').value), a2 = Number($('bleDemoS2').value);
   $('bleDemoV1').textContent = `${a1>=0?'+':''}${a1.toFixed(1)}°`;
   $('bleDemoV2').textContent = `${a2>=0?'+':''}${a2.toFixed(1)}°`;
-  const mk = a => ({ state: Math.abs(a) >= 4 ? 'A' : 'N', angle: a, fault: 0, calibrated: true });
+  const lim = alarmDegNow();
+  const mk = a => ({ state: Math.abs(a) >= lim ? 'A' : 'N', angle: a, fault: 0, calibrated: true });
   sensors = [mk(a1), mk(a2)];
   statusCombined = Math.abs(a2) > Math.abs(a1) ? sensors[1] : sensors[0];
   lastAt = [Date.now(), Date.now()]; lastCombined = Date.now();
   alerts.observeDual(sensors[0], sensors[1], cargoModel.formatLocation(1), cargoModel.formatLocation(2));
   update();
 }
+function setRoadMode(nextMode){
+  roadMode = nextMode === 1 ? 1 : 0;
+  try { localStorage.setItem(ROAD_KEY, String(roadMode)); } catch {}
+  buildDialGauge(document.getElementById('bleGauge1'), 'bleDial1', alarmDegNow());
+  buildDialGauge(document.getElementById('bleGauge2'), 'bleDial2', alarmDegNow());
+  record(`切換防震動路況模式：${roadMode===1?'顛簸山路（5.0° / 1200ms）':'一般道路（4.0° / 800ms）'}。`, 'status');
+  if(demoMode) applyBleDemo();
+  else update();
+  if(connected && control) void syncSettingsToEsp32();
+}
+$('roadNormal')?.addEventListener('click', ()=> setRoadMode(0));
+$('roadRough')?.addEventListener('click', ()=> setRoadMode(1));
+$('exportPreTrip')?.addEventListener('click', ()=>{
+  const now = new Date();
+  const s1 = sensors[0], s2 = sensors[1];
+  const fmt = s => s && s.fault === 0 && s.calibrated && s.angle !== null ? `${s.angle>=0?'+':''}${s.angle.toFixed(1)}° (${STATES[s.state]||s.state})` : !s ? '未連線' : s.fault ? `異常(${FAULTS[s.fault]})` : '未校正';
+  const lines = [
+    'CargoAlert 出車前安全檢查紀錄（Pre-Trip Check）',
+    `檢查時間：${now.toLocaleString('zh-TW',{hour12:false})}`,
+    `檢查模式：${demoMode?'展示模擬':connected?'BLE 實體連線':'未連線'}`,
+    `路況防震模式：${roadMode===1?'顛簸山路（5.0° / 1200ms / EMA 強化濾波）':'一般道路（4.0° / 800ms / EMA 標準濾波）'}`,
+    `一號感知器（${cargoModel.formatLocation(1)}）：${fmt(s1)}`,
+    `二號感知器（${cargoModel.formatLocation(2)}）：${fmt(s2)}`,
+    `聲音／中文語音警報：${alerts.isAudioArmed()?'已啟用':'未啟用'}`,
+    `總判定：${$('preTripPill')?.textContent || '未確認'}`,
+  ];
+  const url = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/plain;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = `CargoAlert-PreTrip-${now.toISOString().slice(0,10)}.txt`; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  record('已匯出出車前安檢紀錄。', 'system');
+});
 $('bleDemoToggle')?.addEventListener('click', ()=>{
   demoMode = !demoMode;
   $('bleDemoToggle').setAttribute('aria-pressed', String(demoMode));

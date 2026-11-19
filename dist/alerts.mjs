@@ -2,6 +2,40 @@ import {AlarmEpisode} from './alert-policy.mjs';
 
 const $=id=>document.getElementById(id);
 
+export function buildAlarmVoiceText(mask, info = {}) {
+  const l1 = info.loc1 || '前左';
+  const l2 = info.loc2 || '後右';
+  const a1 = Number.isFinite(info.angle1) ? `${Math.abs(info.angle1).toFixed(1)} 度` : '';
+  const a2 = Number.isFinite(info.angle2) ? `${Math.abs(info.angle2).toFixed(1)} 度` : '';
+  if (mask === 3) {
+    return `緊急警告，${l1}一號與${l2}二號束帶同時鬆脫，請立即停車檢查。`;
+  }
+  if (mask === 2) {
+    return `警告，${l2}，二號束帶鬆脫${a2 ? ' ' + a2 : ''}，請立即檢查。`;
+  }
+  return `警告，${l1}，一號束帶鬆脫${a1 ? ' ' + a1 : ''}，請立即檢查。`;
+}
+
+export function speakAlarmChinese(text) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window) || !text) return false;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'zh-TW';
+    u.rate = 1.05;
+    u.pitch = 1.0;
+    window.speechSynthesis.speak(u);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function stopVoiceSpeech() {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  try { window.speechSynthesis.cancel(); } catch {}
+}
+
 /**
  * Schedule distinct Web Audio alert tones for Sensor #1 (mask=1: high single beeps),
  * Sensor #2 (mask=2: lower double-beeps), both (mask=3: alternating siren), or preview (mask=4).
@@ -35,7 +69,6 @@ export function scheduleAlarmTonePattern(audioCtx, mask = 1, activeNodes = null)
   };
 
   if (mask === 4) {
-    // Preview both sounds back-to-back: S1 high single beeps, then S2 lower double-beep
     tone(1046, 'sine', 0.00, 0.17, 0.13);
     tone(1046, 'sine', 0.30, 0.17, 0.13);
     tone(523, 'triangle', 0.72, 0.10, 0.16);
@@ -45,7 +78,6 @@ export function scheduleAlarmTonePattern(audioCtx, mask = 1, activeNodes = null)
     return;
   }
   if (mask === 3) {
-    // Both alarming simultaneously: urgent alternating high-low two-tone siren
     for (let i = 0; i < 3; i++) {
       const base = i * 0.38;
       tone(1046, 'sine', base, 0.15, 0.14);
@@ -54,7 +86,6 @@ export function scheduleAlarmTonePattern(audioCtx, mask = 1, activeNodes = null)
     return;
   }
   if (mask === 2) {
-    // Sensor #2: lower pitch rapid double-beep pairs ("嘟嘟— 嘟嘟—")
     for (let i = 0; i < 3; i++) {
       const base = i * 0.52;
       tone(523, 'triangle', base, 0.10, 0.16);
@@ -62,7 +93,6 @@ export function scheduleAlarmTonePattern(audioCtx, mask = 1, activeNodes = null)
     }
     return;
   }
-  // Sensor #1 (default): crisp high single pulse ("逼—— 逼—— 逼——")
   for (let i = 0; i < 3; i++) {
     tone(1046, 'sine', i * 0.34, 0.18, 0.13);
   }
@@ -70,13 +100,24 @@ export function scheduleAlarmTonePattern(audioCtx, mask = 1, activeNodes = null)
 
 export function createAlerts(record) {
   const episodes = [new AlarmEpisode(), new AlarmEpisode()];
-  let audio = null, nodes = [], sound = false, system = false, registration = null, enabling = false, enablingSound = false, testing = false;
+  let audio = null, nodes = [], sound = false, voice = false, system = false, registration = null, enabling = false, enablingSound = false, testing = false;
+  const speechSupported = () => typeof window !== 'undefined' && 'speechSynthesis' in window;
   const support = () => isSecureContext && typeof Notification !== 'undefined' && typeof Notification.requestPermission === 'function' && 'serviceWorker' in navigator && typeof ServiceWorkerRegistration !== 'undefined' && 'showNotification' in ServiceWorkerRegistration.prototype;
 
   function render() {
     $('soundToggle').textContent = sound ? '關閉提示音' : '啟用提示音';
     $('soundToggle').setAttribute('aria-pressed', String(sound));
     $('soundStatus').textContent = sound ? (audio?.state === 'running' ? '已啟用 · 一號高單嗶／二號低雙嗶' : '聲音暫停 · 請關閉後重新啟用') : '未啟用 · 需先按按鈕允許播放';
+
+    const vBtn = $('voiceToggle'), vSt = $('voiceStatus');
+    if (vBtn && vSt) {
+      const ok = speechSupported();
+      vBtn.disabled = !ok;
+      vBtn.textContent = voice ? '關閉中文語音播報' : '啟用中文語音播報';
+      vBtn.setAttribute('aria-pressed', String(voice));
+      vSt.textContent = !ok ? '此瀏覽器不支援語音合成' : voice ? '已啟用 · 警報直接念出鬆脫位置與角度' : '未啟用 · 開啟後免看螢幕聽警報';
+    }
+
     const supported = support(), denied = supported && Notification.permission === 'denied';
     if (supported && Notification.permission !== 'granted') system = false;
     $('notificationToggle').disabled = !supported || denied || enabling;
@@ -90,6 +131,7 @@ export function createAlerts(record) {
   function stopSound() {
     for (const n of nodes) { try { n.stop(); n.disconnect(); } catch {} }
     nodes = [];
+    stopVoiceSpeech();
   }
 
   function play(mask = 1) {
@@ -127,6 +169,14 @@ export function createAlerts(record) {
       enablingSound = false;
       $('soundToggle').disabled = !('AudioContext' in window || 'webkitAudioContext' in window);
     }
+  }
+
+  function toggleVoice() {
+    if (!speechSupported()) return;
+    voice = !voice;
+    render();
+    if (voice) speakAlarmChinese('中文語音警報已開啟，鬆脫時會自動播報位置與角度。');
+    else stopVoiceSpeech();
   }
 
   async function enableSystem() {
@@ -175,22 +225,30 @@ export function createAlerts(record) {
 
   const isAlarming = s => !!(s && s.fault === 0 && s.calibrated && s.state === 'A' && s.angle !== null);
 
-  function triggerDual(s1, s2, label1 = '一號', label2 = '二號') {
+  function triggerDual(s1, s2, label1 = '前左', label2 = '後右') {
     const time = new Date().toLocaleTimeString('zh-TW', { hour12: false });
     const a1 = isAlarming(s1), a2 = isAlarming(s2);
     const mask = (a1 ? 1 : 0) | (a2 ? 2 : 0) || 1;
     const parts = [];
     if (a1) parts.push(`【一號感知器 · ${label1}】${s1.angle >= 0 ? '+' : ''}${s1.angle.toFixed(1)}°`);
     if (a2) parts.push(`【二號感知器 · ${label2}】${s2.angle >= 0 ? '+' : ''}${s2.angle.toFixed(1)}°`);
-    const title = mask === 3 ? '🚨 一號與二號同時鬆脫警報' : mask === 2 ? '⚠️ 二號感知器鬆脫警報' : '⚠️ 一號感知器鬆脫警報';
+    const title = mask === 3 ? '🚨 一號與二號同時鬆脫警報' : mask === 2 ? `⚠️ 二號感知器（${label2}）鬆脫警報` : `⚠️ 一號感知器（${label1}）鬆脫警報`;
     const body = `${time} 收到警報 · ${parts.join('；')}。請檢查束帶與貨物固定狀態。`;
     banner(title, body);
     play(mask);
+    if (voice) {
+      speakAlarmChinese(buildAlarmVoiceText(mask, {
+        loc1: label1,
+        loc2: label2,
+        angle1: a1 ? s1.angle : null,
+        angle2: a2 ? s2.angle : null,
+      }));
+    }
     void notify(`貨物鬆脫警示器：${title}`, body, false);
     record(`本頁鬆脫提醒已觸發（${parts.join('／')}）；不代表 LINE 或系統通知已送達。`);
   }
 
-  function observeDual(s1, s2, label1 = '一號', label2 = '二號') {
+  function observeDual(s1, s2, label1 = '前左', label2 = '後右') {
     const now = performance.now();
     const f1 = episodes[0].observe(s1, now);
     const f2 = episodes[1].observe(s2, now);
@@ -228,10 +286,11 @@ export function createAlerts(record) {
     $('testAlerts').disabled = true;
     banner('本頁提醒測試（一號高單嗶 → 二號低雙嗶）', '這是網站提醒測試，不代表裝置警報；不會操作 ESP32 或發送 LINE。', true);
     const soundResult = play(4);
-    $('alertTestResult').textContent = `橫幅：已顯示。提示音：${soundResult}。系統通知：正在檢查。`;
+    const voiceResult = voice ? (speakAlarmChinese('測試語音播報，前左一號與後右二號警示語音正常。') ? '已播報中文測試語音' : '播放失敗') : '未啟用';
+    $('alertTestResult').textContent = `橫幅：已顯示。提示音：${soundResult}。語音：${voiceResult}。系統通知：正在檢查。`;
     try {
       const notificationResult = await notify('貨物鬆脫警示器：提醒測試', '這是網站提醒測試，不是裝置警報，也未發送 LINE。', true);
-      $('alertTestResult').textContent = `橫幅：已顯示。提示音：${soundResult}。系統通知：${notificationResult}。`;
+      $('alertTestResult').textContent = `橫幅：已顯示。提示音：${soundResult}。語音：${voiceResult}。系統通知：${notificationResult}。`;
       record('測試本頁提醒：' + $('alertTestResult').textContent + ' 未操作 ESP32 或發送 LINE。');
     } finally {
       testing = false;
@@ -240,6 +299,7 @@ export function createAlerts(record) {
   }
 
   $('soundToggle').addEventListener('click', enableSound);
+  $('voiceToggle')?.addEventListener('click', toggleVoice);
   $('notificationToggle').addEventListener('click', enableSystem);
   $('testAlerts').addEventListener('click', test);
   $('ackAlarm').addEventListener('click', acknowledge);
@@ -247,5 +307,11 @@ export function createAlerts(record) {
   window.addEventListener('pagehide', unavailable);
   navigator.permissions?.query({ name: 'notifications' }).then(permission => permission.addEventListener('change', render)).catch(() => {});
   render();
-  return { observe, observeDual, unavailable, reset };
+  return {
+    observe,
+    observeDual,
+    unavailable,
+    reset,
+    isAudioArmed: () => !!(sound || voice),
+  };
 }

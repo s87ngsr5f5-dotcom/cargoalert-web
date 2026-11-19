@@ -1,17 +1,22 @@
 import {createRemoteLineControl} from './remote-control.mjs';
-import {createCargoModel,initThemeToggle} from './cargo-model.mjs?v=3.5';
-import {buildDialGauge,setDialGauge} from './dial-gauge.mjs?v=3.5';
-import {scheduleAlarmTonePattern} from './alerts.mjs?v=3.5';
+import {createCargoModel,initThemeToggle} from './cargo-model.mjs?v=3.6';
+import {buildDialGauge,setDialGauge} from './dial-gauge.mjs?v=3.6';
+import {scheduleAlarmTonePattern,buildAlarmVoiceText,speakAlarmChinese,stopVoiceSpeech} from './alerts.mjs?v=3.6';
+
+const ROAD_KEY='cargoalert.roadmode.v1';
+let roadMode=0;
+try{roadMode=localStorage.getItem(ROAD_KEY)==='1'?1:0;}catch{}
+let ALARM_THRESHOLD_DEG=roadMode===1?5:4;
+const alarmHoldNow=()=>roadMode===1?1200:800;
 
 initThemeToggle('themeToggle');
-buildDialGauge(document.getElementById('remoteAngleGauge1'), 'remoteDial1');
-buildDialGauge(document.getElementById('remoteAngleGauge2'), 'remoteDial2');
+buildDialGauge(document.getElementById('remoteAngleGauge1'), 'remoteDial1', ALARM_THRESHOLD_DEG);
+buildDialGauge(document.getElementById('remoteAngleGauge2'), 'remoteDial2', ALARM_THRESHOLD_DEG);
 
 const $=id=>document.getElementById(id),
 LABELS={stale:'資料過期／暫時失聯',uncalibrated:'未校正',normal:'正常',warning:'注意',confirming:'注意（超標確認中）',alarm:'鬆脫警報',sensor_error:'感測異常',offline:'尚未載入'},
 TYPES={boot:'重新開機',calibration:'校正完成',baseline_cleared:'清除基準',sensor_fault:'感測故障',sensor_recovered:'感測恢復',alarm:'鬆脫警報',state_change:'狀態變化',test_notification:'通知測試'},
 LINE={pending:'等待後端處理',sending:'後端傳送中',accepted:'LINE API 已接受；手機收訊未知',retry:'等待重試',failed:'API 處理失敗',expired:'舊事件超過通知期限',not_configured:'後端 LINE 設定未完成',simulation_skipped:'模擬裝置：不發 LINE',device_owned:'由 ESP32 直接推播 LINE（雲端僅留紀錄）'};
-const ALARM_THRESHOLD_DEG=4;
 const WAN_LABELS={idle:'尚未啟動',wifi_connecting:'Wi-Fi 連線中',uart_unconfirmed:'電氣／UART 尚未確認',configuration_error:'連線設定有誤',modem_initializing:'A7670C 初始化中',sim_checking:'檢查 SIM 中',sim_pin_required:'SIM 需要 PIN',sim_puk_required:'SIM 需要 PUK',sim_missing:'未偵測到 SIM',modem_checking:'確認模組型號中',modem_mismatch:'模組型號不符',network_registering:'等待電信網路註冊',not_registered:'尚未註冊行動網路',waiting_ip:'已進入數據模式，等待 PPP IP',connected:'4G 已取得 PPP IP',wifi_fallback:'目前使用 Wi-Fi 備援',retry_wait:'連線失敗，等待重試'};
 const WAN_ERRORS={uart_unconfirmed:'需先確認模組供電、共地、TX/RX 與位準設定。',configuration_error:'檢查 CellularConfig.h 的電氣確認旗標及 APN 格式。',uart_no_response:'ESP32 未收到完整 AT 回應；檢查 GPIO16/17、115200 baud、共地與模組供電。',sim_not_ready:'SIM 尚未 READY；檢查 SIM 卡、開通狀態或 PIN。',sim_pin_required:'SIM 要求 PIN；先在手機處理，不要猜 PIN。',sim_puk_required:'SIM 要求 PUK；聯絡電信商處理。',apn_setup_failed:'APN 設定被拒；核對電信商提供的 APN。',pin_policy_failed:'SIM PIN 政策設定失敗。',uart_setup_failed:'UART 腳位或 RX 上拉初始化失敗。',ppp_start_failed:'PPP 啟動失敗；檢查模組韌體及 UART 診斷。',modem_check_failed:'模組型號查詢或註冊檢查失敗。',network_not_registered:'行動網路未註冊；檢查 SIM 開通、涵蓋與天線。',data_call_failed:'數據撥號失敗；核對 APN、資費方案與模組狀態。',ip_timeout:'尚未取得 PPP IP；檢查行動數據方案與撥號結果。',data_path_failed:'已有 IP 但資料通道探測失敗，裝置正在重新撥號。',modem_mismatch:'韌體未確認為 A7670 系列，已停止自動撥號。',network_retry:'連線暫時失敗；查看序列埠 h 診斷和下方狀態。',dns_resolution_failed:'模組已有 IP，但 DNS 名稱解析失敗；查看電信 DNS／資料通道。',tls_handshake_failed:'DNS／TCP 可能已通，但 TLS 交握失敗；檢查時鐘、網路攔截與 ESP-TLS 錯誤碼。',tls_certificate_failed:'TLS 憑證驗證失敗；檢查 NTP 校時、憑證鏈與網路攔截。',https_transport_failed:'HTTPS 傳輸失敗；參考 ESP-TLS、Socket 與 ESP 錯誤碼。'};
 const LINE_LABELS={waiting:'LINE 待命',sending:'LINE HTTPS 傳送中',retrying:'LINE 傳送失敗，等待重試',accepted:'LINE API 已接受',failed:'LINE 傳送失敗',waiting_network:'等待行動網路',waiting_clock:'等待網路校時',queued:'警報已排隊',cooling:'LINE 冷卻中',invalid_settings:'LINE 設定未完成或無效',expired:'通知事件已逾期'};
@@ -19,7 +24,7 @@ const LINE_HINTS={waiting:'尚無待傳事件。只有確認鬆脫才會排入�
 
 let token='',device='',timer=null,snapshot=null,events=[],generation=0,lastResponseAt=0,lastServerMs=0,connectionFailed=false,polling=false;
 let lastReceivedMs=null,lastSeq=null,lastBootId=null,lastFullSyncAt=0,notificationOwner='backend';
-let soundEnabled=false,audioContext=null,alarmAudibleActive=false,alarmAcknowledged=false,alarmKey='';
+let soundEnabled=false,voiceEnabled=false,audioContext=null,alarmAudibleActive=false,alarmAcknowledged=false,alarmKey='';
 let demoMode=false,demoTrend=[];
 let recalPending=null,recalPollTimer=null;
 const SESSION_KEY='cargoalert-view-session-v1';
@@ -142,7 +147,34 @@ function updateRecalButtonState(){
  btn.disabled=!(ready&&chk.checked);
 }
 
+function renderRemoteRoadUi(){
+ $('remoteRoadNormal')?.setAttribute('aria-pressed',String(roadMode===0));
+ $('remoteRoadRough')?.setAttribute('aria-pressed',String(roadMode===1));
+ if($('remoteRoadBadge'))$('remoteRoadBadge').textContent=`${ALARM_THRESHOLD_DEG.toFixed(1)}° / ${alarmHoldNow()}ms`;
+ if($('rMetricLimit1'))$('rMetricLimit1').textContent=`門檻 ±${ALARM_THRESHOLD_DEG}°`;
+ if($('rMetricLimit2'))$('rMetricLimit2').textContent=`門檻 ±${ALARM_THRESHOLD_DEG}°`;
+ if($('rRiskLimit1'))$('rRiskLimit1').textContent=`門檻 ${ALARM_THRESHOLD_DEG}°`;
+ if($('rRiskLimit2'))$('rRiskLimit2').textContent=`門檻 ${ALARM_THRESHOLD_DEG}°`;
+}
+
+function renderRemotePreTrip(s1,s2,stale,snap){
+ const ok1=!stale&&!!(s1&&s1.valid);
+ const ok2=!stale&&!!(s2&&s2.valid);
+ const calOk=ok1&&ok2&&s1.calibrated&&s2.calibrated&&s1.state==='normal'&&s2.state==='normal';
+ const wanOk=demoMode||(!stale&&!!snap&&(snap.wan?.state==='connected'||snap.wan?.state==='wifi_fallback'||snap.networkMode==='4G'));
+ const set=(id,tid,ok,txt)=>{if($(id))$(id).dataset.ok=String(ok);if($(tid))$(tid).textContent=txt;};
+ set('rPtS1','rPtS1Text',ok1,ok1?`${cargoModel.formatLocation(1)} · 感測正常`:stale?'資料過期／離線':'異常');
+ set('rPtS2','rPtS2Text',ok2,ok2?`${cargoModel.formatLocation(2)} · 感測正常`:stale?'資料過期／離線':'異常');
+ set('rPtCal','rPtCalText',calOk,calOk?`雙側已歸零（< ${ALARM_THRESHOLD_DEG}°）`:(ok1||ok2)?'未歸零或角度超標':'等待資料');
+ set('rPtWan','rPtWanText',wanOk,demoMode?'展示模擬中':wanOk?'4G／LINE 連線就緒':'等待 4G／雲端回報');
+ const ready=ok1&&ok2&&calOk;
+ const pill=$('remotePreTripPill');
+ if(pill){pill.dataset.ready=String(ready);pill.textContent=ready?'✅ 全部通過｜可安全出車':'⏳ 尚有項目待確認';}
+ if($('rPtSummary'))$('rPtSummary').textContent=ready?`安檢通過（${roadMode===1?'顛簸山路':'一般道路'} ${ALARM_THRESHOLD_DEG}°/${alarmHoldNow()}ms），可匯出紀錄。`:'讀取裝置狀態（或開啟展示模擬）即可自動檢查出車安全。';
+}
+
 function state(){
+ renderRemoteRoadUi();
  control.render();
  updateRecalButtonState();
  const s=snapshot,age=Date.now()-lastResponseAt;
@@ -150,6 +182,7 @@ function state(){
   const banner=$('remoteAlarmBanner');if(banner)banner.hidden=true;
   updateSingleGauge(1,null,true);updateSingleGauge(2,null,true);
   cargoModel.updateSensors([null,null],true);
+  renderRemotePreTrip(null,null,true,null);
   return;
  }
  const stale=demoMode?false:(s.stale||age+s.serverMs-s.receivedMs>(s.staleSeconds||60)*1000);
@@ -167,6 +200,7 @@ function state(){
  updateSingleGauge(1,s1,stale);
  updateSingleGauge(2,s2,stale);
  cargoModel.updateSensors([s1,s2],stale);
+ renderRemotePreTrip(s1,s2,stale,s.snapshot);
 
  const alarming=[];
  if(!stale&&s1&&s1.valid&&s1.calibrated&&s1.state==='alarm'){
@@ -194,9 +228,16 @@ function state(){
    $('remoteAlarmTitle').textContent=alarming.length>1?'🚨 一號與二號感知器同時鬆脫警報！':alarming.length===1?`⚠️ ${sensorNameOf(alarming[0].id)}（${alarming[0].loc}）鬆脫警報！`:'⚠️ 貨物鬆脫警報！';
    $('remoteAlarmText').textContent=`${desc}，請立即停車檢查對應位置之貨物固定束帶！`;
    const soundMask=(alarming.some(a=>a.id===1)?1:0)|(alarming.some(a=>a.id===2)?2:0)||1;
-   if(!alarmAcknowledged&&!alarmAudibleActive){alarmAudibleActive=true;playAlarmBeep(soundMask);}
+   if(!alarmAcknowledged&&!alarmAudibleActive){
+    alarmAudibleActive=true;
+    playAlarmBeep(soundMask);
+    if(voiceEnabled){
+     const a1=alarming.find(a=>a.id===1),a2=alarming.find(a=>a.id===2);
+     speakAlarmChinese(buildAlarmVoiceText(soundMask,{loc1:cargoModel.formatLocation(1),loc2:cargoModel.formatLocation(2),angle1:a1?.delta,angle2:a2?.delta}));
+    }
+   }
   }else{
-   banner.hidden=true;if(!stale){alarmAudibleActive=false;alarmAcknowledged=false;alarmKey='';}
+   banner.hidden=true;if(!stale){alarmAudibleActive=false;alarmAcknowledged=false;alarmKey='';stopVoiceSpeech();}
   }
  }
 }
@@ -399,9 +440,9 @@ function trend(points){
   }
  };
  mkLine(padY,'#9fb2bf','1,3',`+${ySpan}°`,padY+3);
- mkLine(yPos6,'#ad3039','4,3','+4°',Math.min(yPos6+3,yMid-8));
+ mkLine(yPos6,'#ad3039','4,3',`+${ALARM_THRESHOLD_DEG}°`,Math.min(yPos6+3,yMid-8));
  mkLine(yMid,'#587285','2,2','0°',yMid+3);
- mkLine(yNeg6,'#ad3039','4,3','-4°',Math.max(yNeg6+4,yMid+14));
+ mkLine(yNeg6,'#ad3039','4,3',`-${ALARM_THRESHOLD_DEG}°`,Math.max(yNeg6+4,yMid+14));
  mkLine(padY+chartH,'#9fb2bf','1,3',`-${ySpan}°`,padY+chartH+3);
 
  const drawSeries=(idx,strokeColor)=>{
@@ -690,6 +731,7 @@ $('remoteRecalBtn')?.addEventListener('click',async()=>{
 $('remoteAckAlarm')?.addEventListener('click',()=>{
  const banner=$('remoteAlarmBanner');if(banner)banner.hidden=true;
  alarmAcknowledged=true;
+ stopVoiceSpeech();
 });
 
 $('remoteSoundToggle')?.addEventListener('click',()=>{
@@ -700,6 +742,46 @@ $('remoteSoundToggle')?.addEventListener('click',()=>{
   btn.setAttribute('aria-pressed',String(soundEnabled));
   if(soundEnabled)playAlarmBeep(4);
  }
+});
+
+$('remoteVoiceToggle')?.addEventListener('click',()=>{
+ voiceEnabled=!voiceEnabled;
+ const btn=$('remoteVoiceToggle');
+ if(btn){
+  btn.textContent=voiceEnabled?'🗣️ 語音：開':'🗣️ 語音：關';
+  btn.setAttribute('aria-pressed',String(voiceEnabled));
+ }
+ if(voiceEnabled)speakAlarmChinese('遠端中文語音警報已開啟');
+ else stopVoiceSpeech();
+});
+
+function setRemoteRoadMode(next){
+ roadMode=next===1?1:0;
+ ALARM_THRESHOLD_DEG=roadMode===1?5:4;
+ try{localStorage.setItem(ROAD_KEY,String(roadMode));}catch{}
+ buildDialGauge(document.getElementById('remoteAngleGauge1'),'remoteDial1',ALARM_THRESHOLD_DEG);
+ buildDialGauge(document.getElementById('remoteAngleGauge2'),'remoteDial2',ALARM_THRESHOLD_DEG);
+ if(demoMode)updateDemoFromSliders();
+ else state();
+}
+$('remoteRoadNormal')?.addEventListener('click',()=>setRemoteRoadMode(0));
+$('remoteRoadRough')?.addEventListener('click',()=>setRemoteRoadMode(1));
+$('remoteExportPreTrip')?.addEventListener('click',()=>{
+ const now=new Date();
+ const [s1,s2]=extractDualSensors(snapshot?.snapshot);
+ const fmt=s=>s&&s.valid&&s.calibrated&&Number.isFinite(s.delta)?`${s.delta>=0?'+':''}${s.delta.toFixed(1)}° (${LABELS[s.state]||s.state})`:!s?'未連線':!s.valid?'感測異常':'未校正';
+ const lines=[
+  'CargoAlert 4G 雲端出車前安檢紀錄（Pre-Trip Check）',
+  `檢查時間：${now.toLocaleString('zh-TW',{hour12:false})}`,
+  `模式：${demoMode?'展示模擬':device||'未登入'}`,
+  `路況防震模式：${roadMode===1?'顛簸山路（5.0° / 1200ms）':'一般道路（4.0° / 800ms）'}`,
+  `一號感知器（${cargoModel.formatLocation(1)}）：${fmt(s1)}`,
+  `二號感知器（${cargoModel.formatLocation(2)}）：${fmt(s2)}`,
+  `總判定：${$('remotePreTripPill')?.textContent||'未確認'}`,
+ ];
+ const url=URL.createObjectURL(new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/plain;charset=utf-8'}));
+ const a=document.createElement('a');a.href=url;a.download=`CargoAlert-Remote-PreTrip-${now.toISOString().slice(0,10)}.txt`;a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
 
 const setupToggle=(btnId,inputId)=>{

@@ -32,8 +32,10 @@ function arcPath(degStart, degEnd, radius) {
   return `M ${s.x.toFixed(1)} ${s.y.toFixed(1)} A ${radius} ${radius} 0 ${large} 1 ${e.x.toFixed(1)} ${e.y.toFixed(1)}`;
 }
 
-export function buildDialGauge(svgEl, prefix) {
+export function buildDialGauge(svgEl, prefix, alarmDeg = ALARM_DEG) {
   if (!svgEl) return;
+  const limDeg = Number.isFinite(alarmDeg) && alarmDeg > 0 && alarmDeg < MAX_DEG ? alarmDeg : ALARM_DEG;
+  const warnDeg = +(limDeg * 0.65).toFixed(2);
   svgEl.setAttribute('viewBox', '0 0 340 212');
   svgEl.classList.add('crisp-dial-svg');
   svgEl.replaceChildren();
@@ -81,8 +83,8 @@ export function buildDialGauge(svgEl, prefix) {
   svgEl.append(el('path', { d: arcPath(-90, 90, R), class: 'dial-track' }));
 
   // Static color-coded threshold bands on outer rim
-  const alarmAng = (ALARM_DEG / MAX_DEG) * 90; // 30°
-  const warnAng  = (WARN_DEG / MAX_DEG) * 90;  // 18.75°
+  const alarmAng = (limDeg / MAX_DEG) * 90;
+  const warnAng  = (warnDeg / MAX_DEG) * 90;
   svgEl.append(el('path', { d: arcPath(-90, -alarmAng, R), class: 'dial-zone-alarm' }));
   svgEl.append(el('path', { d: arcPath(alarmAng, 90, R), class: 'dial-zone-alarm' }));
   svgEl.append(el('path', { d: arcPath(-alarmAng, -warnAng, R), class: 'dial-zone-warn' }));
@@ -96,7 +98,7 @@ export function buildDialGauge(svgEl, prefix) {
     class: 'dial-live-sweep',
   }));
 
-  // ±4° threshold boundary rays
+  // ±threshold boundary rays
   for (const sign of [-1, 1]) {
     const pIn = polar(sign * alarmAng, R - 28);
     const pOut = polar(sign * alarmAng, R + 7);
@@ -107,11 +109,12 @@ export function buildDialGauge(svgEl, prefix) {
     }));
   }
 
-  // Crisp precision ticks (1° minor, 2° major, ±4° limit) & tabular numeric labels
-  const labels = new Set([-12, -8, -4, 0, 4, 8, 12]);
+  // Crisp precision ticks (1° minor, 2° major, ±threshold limit) & tabular numeric labels
+  const limRound = Math.round(limDeg);
+  const labels = new Set([-12, -8, -limRound, 0, limRound, 8, 12]);
   for (let d = -MAX_DEG; d <= MAX_DEG; d += 1) {
     const a = (d / MAX_DEG) * 90;
-    const isLimit = Math.abs(d) === ALARM_DEG;
+    const isLimit = Math.abs(d) === limRound;
     const isMajor = d % 2 === 0;
     const rOut = R - 8;
     const rIn = isLimit ? R - 24 : isMajor ? R - 19 : R - 13;
